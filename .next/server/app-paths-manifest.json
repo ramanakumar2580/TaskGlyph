@@ -1,0 +1,6 @@
+{
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/sync/route": "app/api/sync/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/pomodoro/page": "app/pomodoro/page.js"
+}
