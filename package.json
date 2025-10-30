@@ -10,9 +10,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@heroicons/react": "^2.2.0",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
     "date-fns": "^4.1.0",
     "dexie": "^4.2.1",
+    "framer-motion": "^12.23.24",
     "geist": "^1.5.1",
+    "motion": "^12.23.24",
     "next": "15.5.5",
     "next-auth": "^4.24.11",
     "pg": "^8.16.3",

@@ -13,9 +13,8 @@ console.log("✅ Using DATABASE_URL:", process.env.DATABASE_URL.split("@")[1]); 
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // ✅ FIX: Add this SSL configuration. Neon requires it.
   ssl: {
-    rejectUnauthorized: false,
+    rejectUnauthorized: false, // Neon requires SSL
   },
 });
 
@@ -28,11 +27,13 @@ async function createTables() {
       id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
       name TEXT,
+      password TEXT, -- ✅ ADDED: Column for hashed password (nullable)
       tier TEXT DEFAULT 'free',
       trial_started_at BIGINT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  console.log("Checked/Created users table."); // Added log
 
   // Tasks table
   await pool.query(`
@@ -45,6 +46,7 @@ async function createTables() {
       updated_at BIGINT NOT NULL
     );
   `);
+  console.log("Checked/Created tasks table."); // Added log
 
   // Notes table
   await pool.query(`
@@ -57,6 +59,7 @@ async function createTables() {
       updated_at BIGINT NOT NULL
     );
   `);
+  console.log("Checked/Created notes table."); // Added log
 
   // Diary entries table
   await pool.query(`
@@ -68,6 +71,7 @@ async function createTables() {
       created_at BIGINT NOT NULL
     );
   `);
+  console.log("Checked/Created diary_entries table."); // Added log
 
   // Pomodoro sessions table
   await pool.query(`
@@ -76,9 +80,10 @@ async function createTables() {
       user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
       duration_minutes INTEGER NOT NULL,
       completed_at BIGINT NOT NULL,
-      type TEXT DEFAULT 'work' -- ✅ 1. Add the new 'type' column
+      type TEXT DEFAULT 'work'
     );
   `);
+  console.log("Checked/Created pomodoro_sessions table."); // Added log
 
   // Device tracking (for tier enforcement)
   await pool.query(`
@@ -89,8 +94,33 @@ async function createTables() {
       registered_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  console.log("Checked/Created user_devices table."); // Added log
+  try {
+    await pool.query(
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`
+    );
+    console.log("Ensured 'password' column exists on users table.");
+  } catch (err) {
+    // Ignore errors like "column already exists"
+    console.warn(
+      "Could not add 'password' column (might already exist):",
+      (err as Error).message
+    );
+  }
+  // Similarly for pomodoro 'type' column if added after initial creation
+  try {
+    await pool.query(
+      `ALTER TABLE pomodoro_sessions ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'work';`
+    );
+    console.log("Ensured 'type' column exists on pomodoro_sessions table.");
+  } catch (err) {
+    console.warn(
+      "Could not add 'type' column (might already exist):",
+      (err as Error).message
+    );
+  }
 
-  console.log("✅ All tables created successfully.");
+  console.log("✅ Database schema check/update complete.");
   await pool.end();
 }
 
