@@ -13,18 +13,42 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$dexie$2f$imp
 // Create a subclass of Dexie for type safety
 class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$dexie$2f$import$2d$wrapper$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"] {
     constructor(){
-        super("TaskGlyphDB"), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "tasks", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "notes", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "diaryEntries", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "pomodoroSessions", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "syncOutbox", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "userMetadata", void 0);
-        // ✅ 1. Bump the database version
+        super("TaskGlyphDB"), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "tasks", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "projects", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "notes", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "diaryEntries", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "pomodoroSessions", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "syncOutbox", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "userMetadata", void 0), // [NEW] Add the new notifications table
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "notifications", void 0);
+        // [NEW] BUMPED TO VERSION 4 for reminder/notification schema
+        this.version(4).stores({
+            userMetadata: "userId",
+            // [UPDATED] Added new fields for querying reminders and meetings
+            tasks: // --- THIS LINE IS THE FIX ---
+            "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
+            projects: "id, name, createdAt, updatedAt",
+            notes: "id, title, createdAt, updatedAt",
+            diaryEntries: "id, entryDate, createdAt",
+            pomodoroSessions: "id, durationMinutes, completedAt, type",
+            syncOutbox: "id, entityType, operation, timestamp",
+            // [NEW] Added notifications table
+            notifications: "id, userId, read, createdAt"
+        });
+        // This was your old version 3, we keep it for migrations
+        this.version(3).stores({
+            userMetadata: "userId",
+            tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule",
+            projects: "id, name, createdAt, updatedAt",
+            notes: "id, title, createdAt, updatedAt",
+            diaryEntries: "id, entryDate, createdAt",
+            pomodoroSessions: "id, durationMinutes, completedAt, type",
+            syncOutbox: "id, entityType, operation, timestamp"
+        });
+        // This was your old version 2
         this.version(2).stores({
             userMetadata: "userId",
             tasks: "id, title, completed, createdAt, updatedAt",
             notes: "id, title, createdAt, updatedAt",
             diaryEntries: "id, entryDate, createdAt",
-            // ✅ 2. Add 'type' to the pomodoroSessions table
             pomodoroSessions: "id, durationMinutes, completedAt, type",
             syncOutbox: "id, entityType, operation, timestamp"
         });
-        // This was your old version 1, we keep it for migrations
+        // This was your old version 1
         this.version(1).stores({
             userMetadata: "userId",
             tasks: "id, title, completed, createdAt, updatedAt",

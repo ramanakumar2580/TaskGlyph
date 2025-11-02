@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "react-datepicker/dist/react-datepicker.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +17,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      {/* ✅ (Point 1) Added a clean background color to the whole page */}
+      <body className={`${inter.className} bg-gray-100 text-gray-900`}>
         <LayoutClient>{children}</LayoutClient>
       </body>
     </html>

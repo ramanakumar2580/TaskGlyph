@@ -1,133 +1,184 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import db, { Task, OperationType, EntityType } from "./clientDb";
+import { useCallback, useMemo } from "react";
+import db, {
+  Task,
+  OperationType,
+  EntityType,
+  Priority,
+  RecurringSchedule,
+} from "./clientDb";
 import { v4 as uuidv4 } from "uuid";
 import { useTier } from "./useTier";
-import { triggerSync } from "../sync/syncService"; // ✅ 1. Import the trigger
+import { triggerSync } from "../sync/syncService";
+import { useLiveQuery } from "dexie-react-hooks"; // For real-time updates
+
+// [UPDATED] Added meetLink to the creation options
+type TaskCreationOptions = {
+  projectId?: string | null;
+  parentId?: string | null;
+  notes?: string | null;
+  dueDate?: number | null;
+  priority?: Priority;
+  tags?: string[];
+  recurringSchedule?: RecurringSchedule;
+  reminderAt?: number | null;
+  meetLink?: string | null; // <-- [NEW] Add meetLink
+};
 
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const allTasks = useLiveQuery(() => db.tasks.toArray(), []);
+
+  // ✅ 2. STABILIZE the 'tasks' array with useMemo
+  // This prevents all child hooks (addTask, etc.) from re-rendering
+  const tasks = useMemo(() => allTasks || [], [allTasks]);
+
   const tier = useTier();
-  const canSync = !!tier; // All tiers sync now
+  const canSync = !!tier;
 
-  // Load tasks from IndexedDB on mount
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const allTasks = await db.tasks.toArray();
-      setTasks(allTasks);
-    };
-    fetchTasks();
-  }, []);
+  /**
+   * Creates a new task and (if free tier) checks 21-task limit.
+   */
+  const addTask = useCallback(
+    async (title: string, options: TaskCreationOptions = {}) => {
+      // 1. ENFORCE 21-TASK LIMIT
+      if (tier === "free") {
+        // Use allTasks.length here to get the most current count
+        const count = allTasks?.length || 0;
+        if (count >= 21) {
+          alert(
+            "Free Plan Limit Reached\n\nYou have reached the 21-task limit for the free plan. Please upgrade for unlimited tasks."
+          );
+          return; // Stop execution
+        }
+      }
 
-  // Add a new task
-  const addTask = async (title: string) => {
-    const newTask: Task = {
-      id: uuidv4(),
-      title,
-      completed: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    await db.tasks.add(newTask);
-    setTasks((prev) => [...prev, newTask]);
-
-    if (canSync) {
-      const syncOp = {
+      // 2. CREATE THE FULL TASK OBJECT
+      const now = Date.now();
+      const newTask: Task = {
         id: uuidv4(),
-        entityType: "task" as EntityType,
-        operation: "create" as OperationType,
-        payload: newTask,
-        timestamp: Date.now(),
+        title: title.trim(),
+        completed: false,
+        createdAt: now,
+        updatedAt: now,
+        projectId: options.projectId || null,
+        parentId: options.parentId || null,
+        notes: options.notes || null,
+        dueDate: options.dueDate || null,
+        priority: options.priority || "none",
+        tags: options.tags || [],
+        recurringSchedule: options.recurringSchedule || "none",
+        reminderAt: options.reminderAt || null,
+
+        // --- [NEW] Add defaults for reminder fields ---
+        meetLink: options.meetLink || null,
+        reminder_30_sent: false,
+        reminder_20_sent: false,
+        reminder_10_sent: false,
       };
-      await db.syncOutbox.add(syncOp);
-      console.log("📤 Added CREATE task to sync outbox", syncOp);
-      triggerSync(); // Poke the sync service
-    }
 
-    return newTask;
-  };
+      // Add to local DB (useLiveQuery will auto-update state)
+      await db.tasks.add(newTask);
 
-  // Toggle task completion
-  const toggleTask = async (id: string, completed: boolean) => {
-    const updatedAt = Date.now();
-    await db.tasks.update(id, { completed, updatedAt });
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed, updatedAt } : task
-      )
-    );
-
-    if (canSync) {
-      const existingTask = tasks.find((t) => t.id === id);
-      if (existingTask) {
-        const updatedTask = { ...existingTask, completed, updatedAt };
+      // Add to sync outbox
+      if (canSync) {
         const syncOp = {
           id: uuidv4(),
           entityType: "task" as EntityType,
-          operation: "update" as OperationType,
-          payload: updatedTask, // Send the *full* updated task
-          timestamp: Date.now(),
+          operation: "create" as OperationType,
+          payload: newTask, // Send the full task object
+          timestamp: now,
         };
         await db.syncOutbox.add(syncOp);
-        console.log("📤 Added UPDATE task to sync outbox");
+        console.log("📤 Added CREATE task to sync outbox", syncOp);
         triggerSync(); // Poke the sync service
       }
-    }
-  };
+      return newTask;
+    },
+    [canSync, tier, allTasks] // Use allTasks for dependency
+  );
 
-  // ✅ --- NEW FUNCTION: Update Task Title ---
-  const updateTaskTitle = async (id: string, title: string) => {
-    const updatedAt = Date.now();
-    await db.tasks.update(id, { title, updatedAt });
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, title, updatedAt } : task
-      )
-    );
+  /**
+   * Deletes a task AND all its subtasks (recursively).
+   */
+  const deleteTask = useCallback(
+    async (taskId: string) => {
+      // CASCADING DELETE
+      const idsToDelete: string[] = [taskId];
+      const findChildren = (parentId: string) => {
+        // ✅ Use 'tasks' (memoized) or 'allTasks' here
+        const children = (allTasks || []).filter(
+          (t: Task) => t.parentId === parentId
+        );
+        for (const child of children) {
+          idsToDelete.push(child.id);
+          findChildren(child.id); // Recurse
+        }
+      };
+      findChildren(taskId); // Find all descendants
 
-    if (canSync) {
-      const existingTask = tasks.find((t) => t.id === id);
-      if (existingTask) {
-        const updatedTask = { ...existingTask, title, updatedAt };
-        const syncOp = {
+      // Delete from local DB (useLiveQuery will auto-update state)
+      await db.tasks.bulkDelete(idsToDelete);
+
+      // Add ALL deletes to sync outbox
+      // --- [FIXED] Corrected typo from 'canSunc' to 'canSync' ---
+      if (canSync) {
+        const now = Date.now();
+        const syncOps = idsToDelete.map((id) => ({
           id: uuidv4(),
           entityType: "task" as EntityType,
-          operation: "update" as OperationType,
-          payload: updatedTask, // Send the *full* updated task
-          timestamp: Date.now(),
-        };
-        await db.syncOutbox.add(syncOp);
-        console.log("📤 Added UPDATE (title) task to sync outbox");
+          operation: "delete" as OperationType,
+          payload: { id }, // Only need ID for delete
+          timestamp: now,
+        }));
+        await db.syncOutbox.bulkAdd(syncOps);
+        console.log(
+          `📤 Added ${idsToDelete.length} DELETE tasks to sync outbox`
+        );
         triggerSync();
       }
-    }
-  };
+    },
+    [canSync, allTasks] // Use allTasks for dependency
+  );
 
-  // ✅ --- NEW FUNCTION: Delete Task ---
-  const deleteTask = async (id: string) => {
-    await db.tasks.delete(id);
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+  /**
+   * Updates any field(s) on a task.
+   */
+  const updateTask = useCallback(
+    async (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => {
+      const updatedAt = Date.now();
+      const finalUpdates = { ...updates, updatedAt };
 
-    if (canSync) {
-      const syncOp = {
-        id: uuidv4(),
-        entityType: "task" as EntityType,
-        operation: "delete" as OperationType,
-        payload: { id }, // For a delete, we only need the ID
-        timestamp: Date.now(),
-      };
-      await db.syncOutbox.add(syncOp);
-      console.log("📤 Added DELETE task to sync outbox");
-      triggerSync();
-    }
-  };
+      // Update local DB (useLiveQuery will auto-update state)
+      await db.tasks.update(id, finalUpdates);
 
+      // Add to sync outbox
+      if (canSync) {
+        // We MUST send the full task object to the API
+        const existingTask = (allTasks || []).find((t: Task) => t.id === id);
+        if (existingTask) {
+          const updatedTask: Task = { ...existingTask, ...finalUpdates };
+          const syncOp = {
+            id: uuidv4(),
+            entityType: "task" as EntityType,
+            operation: "update" as OperationType,
+            payload: updatedTask, // Send the *full* updated task
+            timestamp: updatedAt,
+          };
+          await db.syncOutbox.add(syncOp);
+          console.log("📤 Added UPDATE task to sync outbox", syncOp);
+          triggerSync();
+        }
+      }
+    },
+    [canSync, allTasks] // Use allTasks for dependency
+  );
+
+  // Return the live tasks array and the new C-U-D functions
   return {
-    tasks,
+    tasks, // Return the memoized 'tasks' for the UI
     addTask,
-    toggleTask,
-    updateTaskTitle, // ✅ Export the new function
-    deleteTask, // ✅ Export the new function
+    updateTask,
+    deleteTask,
   };
 }

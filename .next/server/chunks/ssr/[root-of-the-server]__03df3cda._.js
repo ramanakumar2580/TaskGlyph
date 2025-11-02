@@ -17,24 +17,50 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$dexie$2f$imp
 // Create a subclass of Dexie for type safety
 class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$dexie$2f$import$2d$wrapper$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"] {
     tasks;
+    projects;
     notes;
     diaryEntries;
     pomodoroSessions;
     syncOutbox;
     userMetadata;
+    // [NEW] Add the new notifications table
+    notifications;
     constructor(){
         super("TaskGlyphDB");
-        // ✅ 1. Bump the database version
+        // [NEW] BUMPED TO VERSION 4 for reminder/notification schema
+        this.version(4).stores({
+            userMetadata: "userId",
+            // [UPDATED] Added new fields for querying reminders and meetings
+            tasks: // --- THIS LINE IS THE FIX ---
+            "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
+            projects: "id, name, createdAt, updatedAt",
+            notes: "id, title, createdAt, updatedAt",
+            diaryEntries: "id, entryDate, createdAt",
+            pomodoroSessions: "id, durationMinutes, completedAt, type",
+            syncOutbox: "id, entityType, operation, timestamp",
+            // [NEW] Added notifications table
+            notifications: "id, userId, read, createdAt"
+        });
+        // This was your old version 3, we keep it for migrations
+        this.version(3).stores({
+            userMetadata: "userId",
+            tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule",
+            projects: "id, name, createdAt, updatedAt",
+            notes: "id, title, createdAt, updatedAt",
+            diaryEntries: "id, entryDate, createdAt",
+            pomodoroSessions: "id, durationMinutes, completedAt, type",
+            syncOutbox: "id, entityType, operation, timestamp"
+        });
+        // This was your old version 2
         this.version(2).stores({
             userMetadata: "userId",
             tasks: "id, title, completed, createdAt, updatedAt",
             notes: "id, title, createdAt, updatedAt",
             diaryEntries: "id, entryDate, createdAt",
-            // ✅ 2. Add 'type' to the pomodoroSessions table
             pomodoroSessions: "id, durationMinutes, completedAt, type",
             syncOutbox: "id, entityType, operation, timestamp"
         });
-        // This was your old version 1, we keep it for migrations
+        // This was your old version 1
         this.version(1).stores({
             userMetadata: "userId",
             tasks: "id, title, completed, createdAt, updatedAt",

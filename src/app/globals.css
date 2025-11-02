@@ -2,3 +2,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* react-datepicker base tweaks */
+.react-datepicker {
+  font-family: inherit !important;
+  background: transparent !important;
+}
+
+/* Container style */
+.react-datepicker__month-container {
+  background-color: transparent !important;
+  padding: 0.5rem;
+}
+
+/* Days: default (current month) */
+.react-datepicker__day {
+  color: #111827 !important; /* dark */
+}
+
+/* Days from other months */
+.react-datepicker__day--outside-month {
+  color: #9ca3af !important; /* light gray */
+  opacity: 0.95;
+}
+
+/* Selected day */
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #2563eb !important;
+  color: #fff !important;
+  border-radius: 9999px !important;
+}
+
+/* Header */
+.react-datepicker__header {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+/* Current month text (header) */
+.react-datepicker__current-month {
+  color: #111827 !important;
+}
+
+/* Dark mode overrides */
+.dark .react-datepicker__day {
+  color: #e5e7eb !important;
+}
+.dark .react-datepicker__day--outside-month {
+  color: #6b7280 !important;
+}
+.dark .react-datepicker__current-month {
+  color: #f9fafb !important;
+}
