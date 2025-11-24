@@ -5,11 +5,14 @@ import db, { Note, OperationType, EntityType, Folder } from "./clientDb";
 import { v4 as uuidv4 } from "uuid";
 import { useTier } from "./useTier";
 import { triggerSync } from "../sync/syncService";
+import { deleteFromS3 } from "@/lib/deleteFromS3"; // [NEW] Import delete S3
 
+// --- 1. Notes Hook ---
 export function useNotes() {
   const tier = useTier();
   const canSync = !!tier;
 
+  // Live Query
   const notes = useLiveQuery(async () => {
     const activeNotes = await db.notes
       .filter((note) => note.deletedAt === null)
@@ -37,7 +40,6 @@ export function useNotes() {
           timestamp: now,
         };
         await db.syncOutbox.add(syncOp);
-        console.log("📤 Added UPDATE note to sync outbox:", updatedNote.id);
         triggerSync();
       }
     }
@@ -47,7 +49,7 @@ export function useNotes() {
     title: string;
     content: string;
     folderId?: string | null;
-    isQuickNote?: boolean; // [FIX #3] Accept the quick note flag
+    isQuickNote?: boolean;
   }) => {
     const now = Date.now();
     const newNote: Note = {
@@ -59,7 +61,6 @@ export function useNotes() {
       folderId: payload.folderId || null,
       isPinned: false,
       isLocked: false,
-      // [FIX #3] Use the value passed from the UI
       isQuickNote: payload.isQuickNote || false,
       deletedAt: null,
       tags: [],
@@ -76,57 +77,61 @@ export function useNotes() {
         timestamp: now,
       };
       await db.syncOutbox.add(syncOp);
-      console.log("📤 Added CREATE note to sync outbox:", newNote.id);
       triggerSync();
     }
     return newNote;
   };
 
-  // [FIX #3] This function is now redundant, but we keep it
-  // in case you use it elsewhere. addNote() now does both jobs.
   const addQuickNote = async (payload: { title: string; content: string }) => {
-    const now = Date.now();
-    const newNote: Note = {
-      id: uuidv4(),
-      title: payload.title,
-      content: payload.content,
-      createdAt: now,
-      updatedAt: now,
-      folderId: null,
-      isPinned: false,
-      isLocked: false,
-      isQuickNote: true,
-      deletedAt: null,
-      tags: [],
-    };
-
-    await db.notes.add(newNote);
-
-    if (canSync) {
-      const syncOp = {
-        id: uuidv4(),
-        entityType: "note" as EntityType,
-        operation: "create" as OperationType,
-        payload: newNote,
-        timestamp: now,
-      };
-      await db.syncOutbox.add(syncOp);
-      console.log("📤 Added CREATE (Quick) note to sync outbox:", newNote.id);
-      triggerSync();
-    }
-    return newNote;
+    return addNote({ ...payload, isQuickNote: true });
   };
 
+  // Soft Delete (Files stay in S3 for recovery)
   const deleteNote = async (id: string) => {
     console.log(`🗑️ Moving note to trash: ${id}`);
     return updateNote(id, { deletedAt: Date.now(), isPinned: false });
   };
 
+  // [FIX] Hard Delete + S3 Cleanup
   const deleteNotePermanently = async (id: string) => {
     console.log(`🔥 Permanently deleting note: ${id}`);
 
+    // 1. Get the note content to find attachments
+    const note = await db.notes.get(id);
+
+    if (note && note.content) {
+      try {
+        // Parse HTML to find media
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(note.content, "text/html");
+
+        // Find images, videos, audio, and file links (anchors)
+        const mediaElements = doc.querySelectorAll("img, video, audio, a");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const deletePromises: Promise<any>[] = [];
+
+        mediaElements.forEach((el) => {
+          const src = el.getAttribute("src") || el.getAttribute("href");
+          // Check if it looks like a cloud storage URL (basic check)
+          if (src && src.startsWith("http")) {
+            console.log("Deleting attachment from S3:", src);
+            deletePromises.push(deleteFromS3(src));
+          }
+        });
+
+        // Wait for all S3 deletions
+        if (deletePromises.length > 0) {
+          await Promise.all(deletePromises);
+        }
+      } catch (error) {
+        console.error("Error cleaning up S3 attachments:", error);
+      }
+    }
+
+    // 2. Delete from Dexie
     await db.notes.delete(id);
 
+    // 3. Sync deletion
     if (canSync) {
       const syncOp = {
         id: uuidv4(),
@@ -136,7 +141,6 @@ export function useNotes() {
         timestamp: Date.now(),
       };
       await db.syncOutbox.add(syncOp);
-      console.log("📤 Added DELETE note to sync outbox:", id);
       triggerSync();
     }
   };
@@ -192,6 +196,7 @@ export function useNotes() {
   };
 }
 
+// --- 2. Trash Hook ---
 export function useTrashNotes() {
   const notes = useLiveQuery(
     () =>
@@ -204,6 +209,7 @@ export function useTrashNotes() {
   };
 }
 
+// --- 3. Folders Hook ---
 export function useFolders() {
   const tier = useTier();
   const canSync = !!tier;
@@ -220,7 +226,6 @@ export function useFolders() {
     };
 
     await db.folders.add(newFolder);
-    console.log("Folder added to Dexie:", newFolder.id); // [FIX #1] Added log
 
     if (canSync) {
       const syncOp = {
@@ -231,7 +236,6 @@ export function useFolders() {
         timestamp: now,
       };
       await db.syncOutbox.add(syncOp);
-      console.log("📤 Added CREATE folder to sync outbox:", newFolder.id); // [FIX #1] Added log
       triggerSync();
     }
     return newFolder;
@@ -259,14 +263,10 @@ export function useFolders() {
     }
   };
 
-  // [FIX #2] This is the new deleteFolder function you needed
   const deleteFolder = async (id: string) => {
-    console.log(`🔥 Deleting folder: ${id}`);
     const notesToMove = await db.notes.where("folderId").equals(id).toArray();
 
-    // Use a transaction to move notes and delete folder together
     await db.transaction("rw", db.notes, db.folders, async () => {
-      // 1. Update all notes in this folder to have no folderId
       const now = Date.now();
       if (notesToMove.length > 0) {
         const noteUpdates = notesToMove.map((note) => {
@@ -274,16 +274,13 @@ export function useFolders() {
         });
         await Promise.all(noteUpdates);
       }
-      // 2. Delete the folder
       await db.folders.delete(id);
     });
 
-    // 3. Add operations to sync outbox
     if (canSync) {
       const now = Date.now();
-      // Add all note updates to outbox
       for (const note of notesToMove) {
-        const updatedNote = await db.notes.get(note.id); // Get the updated note
+        const updatedNote = await db.notes.get(note.id);
         if (updatedNote) {
           const noteSyncOp = {
             id: uuidv4(),
@@ -296,16 +293,14 @@ export function useFolders() {
         }
       }
 
-      // Add the folder delete op to outbox
       const folderSyncOp = {
         id: uuidv4(),
         entityType: "folder" as EntityType,
         operation: "delete" as OperationType,
-        payload: { id }, // Just need the ID to delete
+        payload: { id },
         timestamp: now,
       };
       await db.syncOutbox.add(folderSyncOp);
-      console.log("📤 Added DELETE folder to sync outbox:", id);
       triggerSync();
     }
   };
@@ -314,13 +309,13 @@ export function useFolders() {
     folders,
     addFolder,
     updateFolder,
-    deleteFolder, // [FIX #2] Export the new function
+    deleteFolder,
   };
 }
 
+// --- 4. Tags Hook ---
 export function useNoteTags() {
   const allTags = useLiveQuery(async () => {
-    // [FIX] This is a more robust way to get all unique tags
     const notes = await db.notes.toArray();
     const tagSet = new Set<string>();
     notes.forEach((note) => {
@@ -334,9 +329,9 @@ export function useNoteTags() {
   };
 }
 
+// --- 5. User Metadata Hook ---
 export function useUserMetadata() {
   const metadata = useLiveQuery(() => db.userMetadata.limit(1).first(), []);
-
   return {
     metadata,
   };

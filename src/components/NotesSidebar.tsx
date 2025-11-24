@@ -15,12 +15,50 @@ import {
   Trash2,
   Zap,
   Tag,
-  PanelRightClose, // [FIX] Import icon for expanding
+  PanelRightClose,
 } from "lucide-react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import * as Tooltip from "@radix-ui/react-tooltip"; // [FIX] Import Tooltip
 
-// (Modal component is unchanged)
+// --- 1. Simple Tooltip Component (No external libraries needed) ---
+const SidebarBtnWithTooltip = ({
+  onClick,
+  icon: Icon,
+  label,
+  isActive = false,
+  className = "",
+}: {
+  onClick: (e: React.MouseEvent) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any;
+  label: string;
+  isActive?: boolean;
+  className?: string;
+}) => (
+  <div className="relative group flex justify-center my-1">
+    <button
+      onClick={onClick}
+      className={`
+        p-2 rounded-md transition-colors duration-200
+        ${
+          isActive
+            ? "bg-blue-100 text-blue-600"
+            : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+        }
+        ${className}
+      `}
+    >
+      <Icon size={20} strokeWidth={2} />
+    </button>
+    {/* Tooltip */}
+    <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-sm">
+      {label}
+      {/* Tiny arrow pointing left */}
+      <span className="absolute top-1/2 -translate-y-1/2 -left-1 border-4 border-transparent border-r-gray-900"></span>
+    </span>
+  </div>
+);
+
+// --- 2. New Folder Modal (Kept same) ---
 function NewFolderModal({
   onClose,
   onCreate,
@@ -41,43 +79,39 @@ function NewFolderModal({
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-lg shadow-xl w-80 p-5"
+        className="bg-white rounded-2xl shadow-2xl w-80 p-6 animate-in fade-in zoom-in-95 duration-200"
       >
-        <h4 className="text-xs font-semibold mb-4 text-center">New Folder</h4>
+        <h4 className="text-sm font-bold mb-4 text-gray-800">
+          Create New Folder
+        </h4>
         <label
           htmlFor="folderName"
-          className="text-sm font-medium text-gray-700"
+          className="text-xs font-semibold text-gray-500 uppercase tracking-wider"
         >
-          Name:
+          Name
         </label>
         <input
           id="folderName"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-400 rounded-md px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full border-b-2 border-gray-200 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
           autoFocus
           onFocus={(e) => e.target.select()}
         />
-        <div className="mt-4 border-t pt-4">
-          <p className="text-sm font-semibold">Make into Smart Folder</p>
-          <p className="text-xs text-gray-500 mt-1">
-            Organise using tags and other filters.
-          </p>
-        </div>
-        <div className="flex justify-end gap-3 mt-5">
+        <div className="flex justify-end gap-3 mt-6">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
+            className="px-4 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 focus:outline-none"
+            className="px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
           >
-            OK
+            Create
           </button>
         </div>
       </form>
@@ -85,31 +119,7 @@ function NewFolderModal({
   );
 }
 
-// [FIX] Add the TooltipButtonWrapper component
-const TooltipButtonWrapper = ({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}) => (
-  <Tooltip.Provider delayDuration={100}>
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          className="bg-black text-white px-2 py-1 rounded text-xs shadow-lg z-50"
-          sideOffset={5}
-        >
-          {label}
-          <Tooltip.Arrow className="fill-black" />
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-);
-
-// --- The Main Sidebar Component ---
+// --- 3. Main Sidebar Component ---
 export function NotesSidebar({
   isCollapsed,
   onToggleClick,
@@ -132,22 +142,9 @@ export function NotesSidebar({
     setSelectedView(newFolder.id);
     setIsModalOpen(false);
   };
-  const handleToggleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onToggleClick();
-  };
-  const handleNewFolderClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsModalOpen(true);
-  };
+
   const handleDeleteFolder = (folderId: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this folder? Notes inside will not be deleted."
-      )
-    ) {
+    if (confirm("Delete this folder? Notes inside will be moved to Trash.")) {
       deleteFolder(folderId);
       if (selectedView === folderId) {
         setSelectedView("all");
@@ -155,195 +152,137 @@ export function NotesSidebar({
     }
   };
 
-  // --- Calculations (unchanged) ---
+  // Counts
   const quickNotesCount = notes?.filter((n) => n.isQuickNote).length || 0;
   const allNotesCount = notes?.filter((n) => !n.isQuickNote).length || 0;
   const trashCount = trashedNotes?.length || 0;
 
-  // --- [FIX] This is the new Collapsed View ---
+  // --- Collapsed View ---
   if (isCollapsed) {
-    // Helper for collapsed item classes
-    const getCollapsedNavItemClasses = (id: string) => {
-      const isActive = selectedView === id;
-      return `
-        flex items-center justify-center w-12 h-10 cursor-pointer rounded-md mx-auto my-0.5 
-        text-gray-700 hover:bg-gray-200
-        ${isActive ? "bg-gray-300 font-semibold text-black" : ""}
-      `;
-    };
-
     return (
-      <Tooltip.Provider>
-        <div className="flex flex-col h-full items-center">
-          {/* Top toolbar (collapsed) */}
-          <div className="flex items-center p-3 h-[44px] box-border border-b border-gray-200">
-            <TooltipButtonWrapper label="Show Sidebar">
-              <button
-                type="button"
-                className="bg-transparent border-none rounded-md cursor-pointer text-gray-600 p-1 hover:bg-gray-200"
-                onClick={handleToggleClick}
-              >
-                <PanelRightClose className="h-4 w-4" strokeWidth={2.5} />
-              </button>
-            </TooltipButtonWrapper>
-          </div>
-
-          {/* Scrolling icon list (collapsed) */}
-          <div
-            className="flex-1 overflow-y-auto 
-                       [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-          >
-            <ul className="list-none p-0 m-0 pt-3">
-              <li>
-                <TooltipButtonWrapper label="New Folder">
-                  <button
-                    onClick={handleNewFolderClick}
-                    className={getCollapsedNavItemClasses("new-folder-btn")}
-                  >
-                    <FolderPlus className="h-4 w-4" strokeWidth={2} />
-                  </button>
-                </TooltipButtonWrapper>
-              </li>
-              <li>
-                <TooltipButtonWrapper label="Quick Notes">
-                  <button
-                    onClick={() => setSelectedView("quick")}
-                    className={getCollapsedNavItemClasses("quick")}
-                  >
-                    <Zap className="h-4 w-4" strokeWidth={2} />
-                  </button>
-                </TooltipButtonWrapper>
-              </li>
-              <li>
-                <TooltipButtonWrapper label="Notes">
-                  <button
-                    onClick={() => setSelectedView("all")}
-                    className={getCollapsedNavItemClasses("all")}
-                  >
-                    <Notebook className="h-4 w-4" strokeWidth={2} />
-                  </button>
-                </TooltipButtonWrapper>
-              </li>
-              <li>
-                <TooltipButtonWrapper label="Recently Deleted">
-                  <button
-                    onClick={() => setSelectedView("trash")}
-                    className={getCollapsedNavItemClasses("trash")}
-                  >
-                    <Trash2 className="h-4 w-4" strokeWidth={2} />
-                  </button>
-                </TooltipButtonWrapper>
-              </li>
-            </ul>
-            {/* Collapsed Folders */}
-            <div className="border-t border-gray-200 mt-3 pt-3">
-              <ul className="list-none p-0 m-0">
-                {folders?.map((folder) => (
-                  <li key={folder.id}>
-                    <TooltipButtonWrapper label={folder.name}>
-                      <button
-                        onClick={() => setSelectedView(folder.id)}
-                        className={getCollapsedNavItemClasses(folder.id)}
-                      >
-                        <Folder className="h-4 w-4" strokeWidth={2} />
-                      </button>
-                    </TooltipButtonWrapper>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {/* Collapsed Tags */}
-            <div className="border-t border-gray-200 mt-3 pt-3">
-              <ul className="list-none p-0 m-0">
-                {tags?.map((tag) => (
-                  <li key={tag}>
-                    <TooltipButtonWrapper label={`#${tag}`}>
-                      <button
-                        onClick={() => setSelectedView(`tag-${tag}`)}
-                        className={getCollapsedNavItemClasses(`tag-${tag}`)}
-                      >
-                        <Tag className="h-4 w-4" strokeWidth={2} />
-                      </button>
-                    </TooltipButtonWrapper>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+      <div className="flex flex-col h-full items-center bg-gray-50/50">
+        {/* Top Toolbar */}
+        <div className="w-full flex justify-center py-3 border-b border-gray-200">
+          <SidebarBtnWithTooltip
+            onClick={onToggleClick}
+            icon={PanelRightClose}
+            label="Expand Sidebar"
+          />
         </div>
-        {/* Modal (still works when collapsed) */}
+
+        {/* Scrollable Icons */}
+        <div className="flex-1 overflow-y-auto w-full py-2 no-scrollbar">
+          <SidebarBtnWithTooltip
+            onClick={() => setIsModalOpen(true)}
+            icon={FolderPlus}
+            label="New Folder"
+          />
+
+          <div className="my-2 h-px w-8 bg-gray-200 mx-auto" />
+
+          <SidebarBtnWithTooltip
+            onClick={() => setSelectedView("quick")}
+            icon={Zap}
+            label="Quick Notes"
+            isActive={selectedView === "quick"}
+          />
+          <SidebarBtnWithTooltip
+            onClick={() => setSelectedView("all")}
+            icon={Notebook}
+            label="All Notes"
+            isActive={selectedView === "all"}
+          />
+          <SidebarBtnWithTooltip
+            onClick={() => setSelectedView("trash")}
+            icon={Trash2}
+            label="Trash"
+            isActive={selectedView === "trash"}
+          />
+
+          <div className="my-2 h-px w-8 bg-gray-200 mx-auto" />
+
+          {/* Folders */}
+          {folders?.map((folder) => (
+            <SidebarBtnWithTooltip
+              key={folder.id}
+              onClick={() => setSelectedView(folder.id)}
+              icon={Folder}
+              label={folder.name}
+              isActive={selectedView === folder.id}
+            />
+          ))}
+
+          {/* Tags */}
+          {tags?.map((tag) => (
+            <SidebarBtnWithTooltip
+              key={tag}
+              onClick={() => setSelectedView(`tag-${tag}`)}
+              icon={Tag}
+              label={`#${tag}`}
+              isActive={selectedView === `tag-${tag}`}
+            />
+          ))}
+        </div>
+
         {isModalOpen && (
           <NewFolderModal
             onClose={() => setIsModalOpen(false)}
             onCreate={handleCreateFolder}
           />
         )}
-      </Tooltip.Provider>
+      </div>
     );
   }
 
-  // --- [FIX] This is now the Expanded View (your original code) ---
-
-  // Helper for conditional classes (for expanded view)
+  // --- Expanded View ---
   const getNavItemClasses = (id: string) => {
     const isActive = selectedView === id;
     return `
-      flex items-center gap-3 px-5 py-2 cursor-pointer rounded-md mx-3 my-0.5 
-      text-sm font-medium text-gray-700 hover:bg-gray-200
-      ${isActive ? "bg-gray-300 font-semibold text-black" : ""}
+      flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-lg mx-3 my-1 
+      text-sm font-medium transition-all duration-200
+      ${
+        isActive
+          ? "bg-white text-blue-600 shadow-sm ring-1 ring-gray-100"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+      }
     `;
   };
 
   return (
     <>
-      <div className="flex flex-col h-full">
-        {/* Sidebar Toolbar */}
-        <div
-          className="flex items-center p-3 h-[44px] box-border border-b border-gray-200"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {/* [FIX] This button is now only in the expanded view */}
+      <div className="flex flex-col h-full bg-gray-50/30">
+        {/* Toolbar */}
+        <div className="flex items-center px-4 h-[52px] border-b border-gray-200">
           <button
-            type="button"
-            className="bg-transparent border-none rounded-md cursor-pointer text-gray-600 p-1 hover:bg-gray-200"
-            title="Hide Sidebar"
-            onClick={handleToggleClick}
+            className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-md transition-colors"
+            onClick={onToggleClick}
+            title="Collapse Sidebar"
           >
-            <PanelLeftClose className="h-4 w-4" strokeWidth={2.5} />
+            <PanelLeftClose size={20} />
           </button>
-
-          <div className="flex-grow"></div>
-
-          <TooltipButtonWrapper label="New Folder">
-            <button
-              type="button"
-              className="bg-transparent border-none rounded-md cursor-pointer text-gray-600 p-1 hover:bg-gray-200"
-              onClick={handleNewFolderClick}
-            >
-              <FolderPlus className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </TooltipButtonWrapper>
+          <div className="flex-grow" />
+          <button
+            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            onClick={() => setIsModalOpen(true)}
+            title="Create Folder"
+          >
+            <FolderPlus size={20} />
+          </button>
         </div>
 
-        {/* Folder List Wrapper (This has your scrollbar) */}
-        <div
-          className="flex-1 overflow-y-auto 
-                   [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-        >
-          {/* System Folders */}
-          <ul className="list-none p-0 m-0 pt-3">
+        {/* List */}
+        <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">
+          <ul>
             <li
               className={getNavItemClasses("quick")}
               onClick={() => setSelectedView("quick")}
             >
-              <Zap className="h-4 w-4" strokeWidth={2} />
+              <Zap
+                size={18}
+                className={selectedView === "quick" ? "fill-blue-100" : ""}
+              />
               <span>Quick Notes</span>
-              <span
-                className={`ml-auto text-xs ${
-                  selectedView === "quick" ? "text-black" : "text-gray-500"
-                }`}
-              >
+              <span className="ml-auto text-xs font-bold opacity-60">
                 {quickNotesCount}
               </span>
             </li>
@@ -351,13 +290,9 @@ export function NotesSidebar({
               className={getNavItemClasses("all")}
               onClick={() => setSelectedView("all")}
             >
-              <Notebook className="h-4 w-4" strokeWidth={2} />
-              <span>Notes</span>
-              <span
-                className={`ml-auto text-xs ${
-                  selectedView === "all" ? "text-black" : "text-gray-500"
-                }`}
-              >
+              <Notebook size={18} />
+              <span>All Notes</span>
+              <span className="ml-auto text-xs font-bold opacity-60">
                 {allNotesCount}
               </span>
             </li>
@@ -365,25 +300,21 @@ export function NotesSidebar({
               className={getNavItemClasses("trash")}
               onClick={() => setSelectedView("trash")}
             >
-              <Trash2 className="h-4 w-4" strokeWidth={2} />
-              <span>Recently Deleted</span>
-              <span
-                className={`ml-auto text-xs ${
-                  selectedView === "trash" ? "text-black" : "text-gray-500"
-                }`}
-              >
+              <Trash2 size={18} />
+              <span>Trash</span>
+              <span className="ml-auto text-xs font-bold opacity-60">
                 {trashCount}
               </span>
             </li>
           </ul>
 
-          {/* Custom Folders Title */}
-          <h3 className="text-xs font-semibold text-gray-500 uppercase px-5 pt-4 pb-1 mt-3 border-t border-gray-200">
-            My Folders
-          </h3>
-
-          {/* Custom Folders List */}
-          <ul className="list-none p-0 m-0">
+          {/* Custom Folders */}
+          <div className="mt-6 mb-2 px-5 flex items-center justify-between">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Folders
+            </h3>
+          </div>
+          <ul>
             {folders?.map((folder) => (
               <ContextMenu.Root key={folder.id}>
                 <ContextMenu.Trigger>
@@ -391,26 +322,25 @@ export function NotesSidebar({
                     className={getNavItemClasses(folder.id)}
                     onClick={() => setSelectedView(folder.id)}
                   >
-                    <Folder className="h-4 w-4" strokeWidth={2} />
-                    <span>{folder.name}</span>
-                    <span
-                      className={`ml-auto text-xs ${
-                        selectedView === folder.id
-                          ? "text-black"
-                          : "text-gray-500"
-                      }`}
-                    >
+                    <Folder
+                      size={18}
+                      className={
+                        selectedView === folder.id ? "fill-blue-100" : ""
+                      }
+                    />
+                    <span className="truncate">{folder.name}</span>
+                    <span className="ml-auto text-xs font-bold opacity-60">
                       {notes?.filter((n) => n.folderId === folder.id).length ||
                         0}
                     </span>
                   </li>
                 </ContextMenu.Trigger>
-                <ContextMenu.Content className="glass-morphism w-48 rounded-md shadow-lg p-2 z-50">
+                <ContextMenu.Content className="bg-white rounded-lg shadow-xl border border-gray-100 p-1 min-w-[150px] z-50 animate-in fade-in zoom-in-95">
                   <ContextMenu.Item
                     onSelect={() => handleDeleteFolder(folder.id)}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200 text-red-600"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 cursor-pointer outline-none"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 size={14} />
                     Delete Folder
                   </ContextMenu.Item>
                 </ContextMenu.Content>
@@ -418,15 +348,16 @@ export function NotesSidebar({
             ))}
           </ul>
 
-          {/* Tags Section */}
-          <h3 className="text-xs font-semibold text-gray-500 uppercase px-5 pt-4 pb-1 mt-3 border-t border-gray-200">
-            Tags
-          </h3>
-          <ul className="list-none p-0 m-0">
+          {/* Tags */}
+          <div className="mt-6 mb-2 px-5">
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Tags
+            </h3>
+          </div>
+          <ul>
             {!tags || tags.length === 0 ? (
-              <li className="flex items-center gap-3 px-5 py-2 text-sm text-gray-500">
-                <Tag className="h-4 w-4" strokeWidth={2} />
-                <span>No tags yet...</span>
+              <li className="px-5 py-2 text-xs text-gray-400 italic">
+                No tags yet...
               </li>
             ) : (
               tags.map((tag) => (
@@ -435,8 +366,8 @@ export function NotesSidebar({
                   className={getNavItemClasses(`tag-${tag}`)}
                   onClick={() => setSelectedView(`tag-${tag}`)}
                 >
-                  <Tag className="h-4 w-4" strokeWidth={2} />
-                  <span>{tag}</span>
+                  <Tag size={16} />
+                  <span className="truncate">#{tag}</span>
                 </li>
               ))
             )}
@@ -444,7 +375,6 @@ export function NotesSidebar({
         </div>
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <NewFolderModal
           onClose={() => setIsModalOpen(false)}

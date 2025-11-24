@@ -17,7 +17,7 @@ import TaskCard from "@/components/TaskCard";
 import ProjectCard from "@/components/ProjectCard";
 import AddProjectModal from "@/components/AddProjectModal";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import TaskCalendar from "@/components/TaskCalendar"; // <-- 1. IMPORT YOUR NEW COMPONENT
+import TaskCalendar from "@/components/TaskCalendar";
 
 export default function TaskPageContent() {
   const { tasks, addTask } = useTasks();
@@ -30,17 +30,38 @@ export default function TaskPageContent() {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Filter logic
-  const filteredTasks = tasks.filter((task: Task) =>
-    task.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- 1. SEARCH LOGIC FIX (Deep Search) ---
+  const filteredTasks = tasks.filter((task: Task) => {
+    const term = searchTerm.toLowerCase();
+    const inTitle = task.title.toLowerCase().includes(term);
+    // Check if notes exist and contain the term
+    const inNotes = task.notes
+      ? task.notes.toLowerCase().includes(term)
+      : false;
+
+    return inTitle || inNotes;
+  });
+
+  // --- 2. SUBTASK VISIBILITY FIX ---
   const standaloneTasks = filteredTasks
-    .filter((task: Task) => !task.projectId && !task.parentId)
+    .filter((task: Task) => {
+      // If user is searching, SHOW EVERYTHING (Subtasks, Project tasks, etc.)
+      // We want to find the item regardless of where it lives.
+      if (searchTerm.trim().length > 0) return true;
+
+      // If NOT searching, keep the view clean (Only standalone, root tasks)
+      return !task.projectId && !task.parentId;
+    })
     .sort((a, b) => a.createdAt - b.createdAt);
 
-  const filteredProjects = projects.filter((project: Project) =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProjects = projects.filter((project: Project) => {
+    const term = searchTerm.toLowerCase();
+    const inName = project.name.toLowerCase().includes(term);
+    const inDesc = project.description
+      ? project.description.toLowerCase().includes(term)
+      : false;
+    return inName || inDesc;
+  });
 
   const handleAddTask = (e: FormEvent) => {
     e.preventDefault();
@@ -56,7 +77,7 @@ export default function TaskPageContent() {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       console.log("Drag end:", active.id, "over", over.id);
-      alert("Drag-and-drop feature coming soon!");
+      // alert("Drag-and-drop feature coming soon!");
     }
   };
 
@@ -84,10 +105,10 @@ export default function TaskPageContent() {
                       <motion.input
                         ref={searchInputRef}
                         type="text"
-                        placeholder="Search..."
+                        placeholder="Search title, notes..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        onBlur={() => setIsSearchVisible(false)}
+                        onBlur={() => !searchTerm && setIsSearchVisible(false)} // Only close if empty
                         className="pl-10 pr-4 py-2 w-48 sm:w-64 bg-white/70 border-none rounded-lg shadow-sm text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-md"
                         initial={{ width: 0, opacity: 0 }}
                         animate={{ width: "100%", opacity: 1 }}
@@ -155,20 +176,21 @@ export default function TaskPageContent() {
                       </p>
                     </div>
                   ) : (
-                    <motion.div layout className="space-y-6">
+                    // [FIX #3] Removed 'layout' prop to stop ugly jumping animation
+                    <div className="space-y-6">
                       <AnimatePresence>
                         {filteredProjects.map((project) => (
                           <ProjectCard key={project.id} project={project} />
                         ))}
                       </AnimatePresence>
-                    </motion.div>
+                    </div>
                   )}
                 </div>
 
                 {/* Standalone Tasks */}
                 <div className="lg:col-span-1 space-y-4">
                   <h2 className="text-xl font-semibold text-gray-800">
-                    Standalone Tasks
+                    {searchTerm ? "Search Results" : "Standalone Tasks"}
                   </h2>
 
                   <form
@@ -195,22 +217,24 @@ export default function TaskPageContent() {
                   {standaloneTasks.length === 0 ? (
                     <div className="text-center p-6 bg-white/70 backdrop-blur-md rounded-lg shadow-sm border border-gray-100">
                       <p className="text-gray-500 text-sm">
-                        No standalone tasks.
+                        {searchTerm
+                          ? "No tasks found."
+                          : "No standalone tasks."}
                       </p>
                     </div>
                   ) : (
-                    <motion.ul layout className="space-y-2">
+                    // [FIX #3] Removed 'layout' prop from motion.ul
+                    <ul className="space-y-2">
                       <AnimatePresence>
                         {standaloneTasks.map((task) => (
                           <TaskCard key={task.id} task={task} />
                         ))}
                       </AnimatePresence>
-                    </motion.ul>
+                    </ul>
                   )}
                 </div>
               </div>
             ) : (
-              // <-- 2. REPLACE THE PLACEHOLDER
               // --- Calendar View ---
               <TaskCalendar tasks={tasks} />
             )}

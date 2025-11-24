@@ -18,15 +18,12 @@ import {
   Mic,
   File,
   Image,
-  Video,
   Link,
-  // HelpCircle, // [FIX] Removed HelpCircle
   Lock,
   Unlock,
   Trash2,
 } from "lucide-react";
 
-// (TooltipButtonWrapper component is unchanged)
 const TooltipButtonWrapper = ({
   children,
   label,
@@ -55,7 +52,6 @@ type Props = {
   mediaInputRef: React.RefObject<HTMLInputElement | null>;
   docInputRef: React.RefObject<HTMLInputElement | null>;
   onAddLink: () => void;
-  // onHelpClick: () => void; // [FIX] Removed Help prop
   onRecordAudioClick: () => void;
   isLocked: boolean;
   onToggleLock: () => void;
@@ -67,48 +63,29 @@ export function EditorToolbar({
   mediaInputRef,
   docInputRef,
   onAddLink,
-  // onHelpClick, // [FIX] Removed Help prop
   onRecordAudioClick,
   isLocked,
   onToggleLock,
   onDeleteNote,
 }: Props) {
   if (!editor) {
-    // (Disabled toolbar)
-    return (
-      <div className="flex items-center gap-2 p-3 h-[44px] box-border border-b border-gray-200 opacity-50">
-        <Bold className="w-4 h-4" />
-        <Italic className="w-4 h-4" />
-        <Link className="w-4 h-4" />
-        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-        <Heading1 className="w-4 h-4" />
-        <Heading2 className="w-4 h-4" />
-        <Heading3 className="w-4 h-4" />
-        <div className="w-px h-5 bg-gray-300 mx-1"></div>
-        <List className="w-4 h-4" />
-        <ListOrdered className="w-4 h-4" />
-        <ListChecks className="w-4 h-4" />
-        <Paperclip className="w-4 h-4" />
-        <Lock className="w-4 h-4" />
-        <Trash2 className="w-4 h-4" />
-        <div className="flex-grow"></div>
-        {/* <HelpCircle className="w-4 h-4" /> // [FIX] Removed Help icon */}
-      </div>
-    );
+    return null;
   }
 
-  // (Button component is unchanged)
+  // [FIX #1] Added onMouseDown={(e) => e.preventDefault()}
+  // This prevents the button from stealing focus from the editor
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Button = ({ onClick, isActive, children, label }: any) => (
     <TooltipButtonWrapper label={label}>
       <button
         type="button"
+        onMouseDown={(e) => e.preventDefault()} // Important for single click
         onClick={onClick}
         disabled={!editor.isEditable && !isLocked}
-        className={`p-2 rounded-md disabled:opacity-50 ${
+        className={`p-2 rounded-md transition-colors disabled:opacity-50 ${
           isActive
-            ? "bg-gray-300 text-black"
-            : "text-gray-600 hover:bg-gray-200"
+            ? "bg-black text-white"
+            : "text-gray-600 hover:bg-gray-200 hover:text-black"
         }`}
       >
         {children}
@@ -117,9 +94,8 @@ export function EditorToolbar({
   );
 
   return (
-    <div className="flex items-center gap-2 p-3 h-[44px] box-border border-b border-gray-200">
+    <div className="flex items-center gap-1 p-2 h-[50px] box-border border-b border-gray-200 overflow-x-auto no-scrollbar bg-white sticky top-0 z-10">
       <>
-        {/* (All format buttons are unchanged) */}
         <Button
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
@@ -141,7 +117,9 @@ export function EditorToolbar({
         >
           <Link className="w-4 h-4" />
         </Button>
+
         <div className="w-px h-5 bg-gray-300 mx-1"></div>
+
         <Button
           onClick={() =>
             editor.chain().focus().toggleHeading({ level: 1 }).run()
@@ -169,7 +147,9 @@ export function EditorToolbar({
         >
           <Heading3 className="w-4 h-4" />
         </Button>
+
         <div className="w-px h-5 bg-gray-300 mx-1"></div>
+
         <Button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive("bulletList")}
@@ -192,7 +172,9 @@ export function EditorToolbar({
           <ListChecks className="w-4 h-4" />
         </Button>
 
-        {/* Attachment Dropdown Menu (unchanged) */}
+        <div className="w-px h-5 bg-gray-300 mx-1"></div>
+
+        {/* Attachment Dropdown */}
         <Tooltip.Provider delayDuration={100}>
           <DropdownMenu.Root>
             <Tooltip.Root>
@@ -200,6 +182,7 @@ export function EditorToolbar({
                 <DropdownMenu.Trigger asChild>
                   <button
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     disabled={!editor.isEditable}
                     className="p-2 rounded-md text-gray-600 hover:bg-gray-200 disabled:opacity-50"
                   >
@@ -218,37 +201,38 @@ export function EditorToolbar({
             </Tooltip.Root>
             <DropdownMenu.Portal>
               <DropdownMenu.Content
-                className="bg-white rounded-md shadow-lg p-2 z-50 border border-gray-200"
+                className="bg-white rounded-md shadow-lg p-2 z-50 border border-gray-200 min-w-[180px] animate-in fade-in zoom-in-95 duration-100"
                 sideOffset={5}
+                align="start"
               >
                 <DropdownMenu.Item
                   onSelect={() => mediaInputRef.current?.click()}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                  className="flex items-center gap-3 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
                 >
                   <Image className="w-4 h-4" />
-                  <Video className="w-4 h-4" />
-                  Choose Photo or Video
+                  <span>Photo / Video</span>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   onSelect={onRecordAudioClick}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                  className="flex items-center gap-3 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
                 >
                   <Mic className="w-4 h-4" />
-                  Record Audio
+                  <span>Record Audio</span>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   onSelect={() => docInputRef.current?.click()}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                  className="flex items-center gap-3 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
                 >
                   <File className="w-4 h-4" />
-                  Attach Document
+                  <span>Document</span>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
         </Tooltip.Provider>
 
-        {/* Lock Button (unchanged) */}
+        <div className="flex-grow"></div>
+
         <Button
           onClick={onToggleLock}
           isActive={isLocked}
@@ -261,7 +245,6 @@ export function EditorToolbar({
           )}
         </Button>
 
-        {/* Delete Button (unchanged) */}
         <Button onClick={onDeleteNote} isActive={false} label="Move to Trash">
           <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
         </Button>

@@ -28,26 +28,27 @@ export default function NotesPage() {
     }
   };
 
-  return (
-    // [FIX] Removed 'rounded-lg' from this container div
-    <div
-      className="flex overflow-hidden bg-white text-black fixed top-[60px] left-0 right-0 bottom-0 z-40 
-                 border-t border-gray-200 shadow-sm"
+  // Custom Resize Handle Component for better UX
+  const ResizeHandle = ({ className = "" }: { className?: string }) => (
+    <PanelResizeHandle
+      className={`w-[2px] bg-transparent hover:bg-blue-400 transition-all duration-300 hover:w-[3px] cursor-col-resize relative group outline-none z-50 ${className}`}
     >
-      <PanelGroup
-        direction="horizontal"
-        // 'overflow-hidden' here clips the corners
-        className="overflow-hidden"
-      >
+      {/* Visual Indicator line inside the grab area */}
+      <div className="absolute inset-y-0 left-1/2 w-[1px] bg-gray-200 group-hover:bg-blue-400 transition-colors h-full" />
+    </PanelResizeHandle>
+  );
+
+  return (
+    <div className="flex overflow-hidden bg-gray-50/30 text-black fixed top-[60px] left-0 right-0 bottom-0 z-40">
+      <PanelGroup direction="horizontal" className="w-full h-full">
         {/* Pane 1: Folder Sidebar */}
         <Panel
           ref={sidebarPanelRef}
           collapsible={true}
-          defaultSize={20}
+          defaultSize={18}
           minSize={15}
-          maxSize={30}
-          // [FIX] 'rounded-tl-lg' gives you the top-left curve
-          className="h-full box-border bg-gray-50 rounded-tl-lg"
+          maxSize={25}
+          className="h-full bg-gray-50/50 border-r border-gray-100"
           onCollapse={() => setIsSidebarCollapsed(true)}
           onExpand={() => setIsSidebarCollapsed(false)}
         >
@@ -59,19 +60,15 @@ export default function NotesPage() {
           />
         </Panel>
 
-        {/* Resize Handle 1 */}
-        <PanelResizeHandle
-          className="w-px bg-gray-200 cursor-col-resize transition-colors 
-                     data-[active=true]:bg-gray-800 data-[active=true]:w-[2px] 
-                     hover:bg-gray-800 hover:w-[2px]"
-        />
+        {/* Handle 1 */}
+        <ResizeHandle />
 
         {/* Pane 2: Note List */}
         <Panel
-          defaultSize={30}
+          defaultSize={25}
           minSize={20}
-          maxSize={40}
-          className="h-full box-border bg-gray-100"
+          maxSize={35}
+          className="h-full bg-white/80 backdrop-blur-sm"
         >
           <NoteList
             isSidebarCollapsed={isSidebarCollapsed}
@@ -82,19 +79,15 @@ export default function NotesPage() {
           />
         </Panel>
 
-        {/* Resize Handle 2 */}
-        <PanelResizeHandle
-          className="w-px bg-gray-200 cursor-col-resize transition-colors 
-                     data-[active=true]:bg-gray-800 data-[active=true]:w-[2px] 
-                     hover:bg-gray-800 hover:w-[2px]"
-        />
+        {/* Handle 2 */}
+        <ResizeHandle />
 
-        {/* Pane 3: Editor */}
+        {/* Pane 3: Editor (Main Area) */}
         <Panel
-          defaultSize={50}
+          defaultSize={57}
           minSize={30}
-          // [FIX] 'rounded-tr-lg' gives you the top-right curve
-          className="h-full box-border bg-white rounded-tr-lg"
+          // Added shadow and z-index to make it pop slightly above the list
+          className="h-full bg-white shadow-[-5px_0_15px_-3px_rgba(0,0,0,0.02)] z-10 relative"
         >
           <NoteEditor
             activeNoteId={activeNoteId}

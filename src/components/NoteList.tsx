@@ -36,7 +36,7 @@ import {
 } from "./NotePasswordModals";
 import { TagsModal } from "./TagsModal";
 
-// (Date grouping logic - unchanged)
+// --- Date Grouping Logic ---
 const now = new Date();
 const today = new Date(now.setHours(0, 0, 0, 0)).getTime();
 const yesterday = new Date(now.setDate(now.getDate() - 1)).getTime();
@@ -70,7 +70,8 @@ function groupNotesByDate(notes: Note[]) {
   }, {} as Record<string, Note[]>);
 }
 
-// (NoteListItem - unchanged)
+// --- Helper Components ---
+
 function NoteListItem({
   note,
   isActive,
@@ -90,12 +91,25 @@ function NoteListItem({
   onDelete: () => void;
   onTags: () => void;
 }) {
+  // [FIX #2] Sidebar Preview Logic: First line only, Max 20 chars
   const preview = useMemo(() => {
+    if (note.isLocked) return "Note is locked";
     if (!note.content) return "No additional text";
+
     const el = document.createElement("div");
     el.innerHTML = note.content;
-    return (el.textContent || "").substring(0, 100) || "No additional text";
-  }, [note.content]);
+    const fullText = el.textContent || "";
+
+    // Get first non-empty line
+    const lines = fullText.split("\n").filter((line) => line.trim() !== "");
+    const firstLine = lines[0] || "No additional text";
+
+    // Truncate to 20 characters
+    if (firstLine.length > 20) {
+      return firstLine.substring(0, 20) + "...";
+    }
+    return firstLine;
+  }, [note.content, note.isLocked]);
 
   const title = note.title || "New Note";
 
@@ -105,12 +119,14 @@ function NoteListItem({
         <div
           onClick={onClick}
           className={`relative p-4 border-b border-gray-200 cursor-pointer group ${
-            isActive ? "bg-white shadow-inner" : "hover:bg-gray-200"
+            isActive
+              ? "bg-white shadow-inner border-l-4 border-l-black"
+              : "hover:bg-gray-100 border-l-4 border-l-transparent"
           }`}
         >
           <button
             onClick={onTogglePin}
-            className={`absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-300 hover:text-black
+            className={`absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-300 hover:text-black transition-opacity duration-200
               ${
                 note.isPinned
                   ? "opacity-100"
@@ -118,50 +134,55 @@ function NoteListItem({
               }`}
           >
             <Pin
-              className={`w-4 h-4 ${
+              className={`w-3.5 h-3.5 ${
                 note.isPinned ? "fill-black" : "fill-none"
               }`}
             />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-1">
             {note.isLocked && (
-              <Lock className="w-3 h-3 flex-shrink-0 text-gray-500" />
+              <Lock className="w-3 h-3 flex-shrink-0 text-gray-400" />
             )}
-            <h3 className="font-semibold text-sm truncate pr-6">{title}</h3>
+            <h3
+              className={`font-semibold text-sm truncate pr-6 ${
+                isActive ? "text-black" : "text-gray-700"
+              }`}
+            >
+              {title}
+            </h3>
           </div>
 
-          <p className="text-xs text-gray-600 truncate">
-            {note.isLocked ? "Note is locked" : preview}
-          </p>
+          <p className="text-xs text-gray-500 truncate">{preview}</p>
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Content className="glass-morphism w-48 rounded-md shadow-lg p-2 z-50">
+
+      <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
         <ContextMenu.Item
           onSelect={() => onTogglePin(new MouseEvent("click") as any)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
         >
           <Pin className="w-4 h-4" />
           {note.isPinned ? "Unpin Note" : "Pin Note"}
         </ContextMenu.Item>
         <ContextMenu.Item
           onSelect={note.isLocked ? onUnlock : onLock}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
         >
           <Lock className="w-4 h-4" />
           {note.isLocked ? "Unlock Note" : "Lock Note"}
         </ContextMenu.Item>
         <ContextMenu.Item
           onSelect={onTags}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
         >
           <Tag className="w-4 h-4" />
           Tags
         </ContextMenu.Item>
-        <ContextMenu.Separator className="h-px bg-gray-200 my-1" />
+        <ContextMenu.Separator className="h-px bg-gray-100 my-1" />
         <ContextMenu.Item
           onSelect={onDelete}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200 text-red-600"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-red-50 outline-none text-red-600"
         >
           <Trash2 className="w-4 h-4" />
           Delete Note
@@ -171,7 +192,6 @@ function NoteListItem({
   );
 }
 
-// (NoteGalleryItem - unchanged)
 function NoteGalleryItem({
   note,
   isActive,
@@ -191,12 +211,23 @@ function NoteGalleryItem({
   onDelete: () => void;
   onTags: () => void;
 }) {
+  // [FIX #2] Gallery Preview Logic: First line only, Max 20 chars
   const preview = useMemo(() => {
+    if (note.isLocked) return "Note is locked";
     if (!note.content) return "No additional text";
+
     const el = document.createElement("div");
     el.innerHTML = note.content;
-    return (el.textContent || "").substring(0, 150) || "No additional text";
-  }, [note.content]);
+    const fullText = el.textContent || "";
+
+    const lines = fullText.split("\n").filter((line) => line.trim() !== "");
+    const firstLine = lines[0] || "No additional text";
+
+    if (firstLine.length > 20) {
+      return firstLine.substring(0, 20) + "...";
+    }
+    return firstLine;
+  }, [note.content, note.isLocked]);
 
   const title = note.title || "New Note";
 
@@ -205,16 +236,16 @@ function NoteGalleryItem({
       <ContextMenu.Trigger>
         <div
           onClick={onClick}
-          className={`relative h-48 flex flex-col p-4 border border-gray-200 cursor-pointer group rounded-lg
+          className={`relative h-40 flex flex-col p-4 border rounded-xl cursor-pointer group transition-all duration-200
             ${
               isActive
-                ? "bg-white shadow-lg border-gray-300"
-                : "bg-white hover:shadow-md"
+                ? "bg-white shadow-md border-black ring-1 ring-black/5"
+                : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm"
             }`}
         >
           <button
             onClick={onTogglePin}
-            className={`absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-300 hover:text-black
+            className={`absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-black transition-all
               ${
                 note.isPinned
                   ? "opacity-100"
@@ -222,50 +253,54 @@ function NoteGalleryItem({
               }`}
           >
             <Pin
-              className={`w-4 h-4 ${
+              className={`w-3.5 h-3.5 ${
                 note.isPinned ? "fill-black" : "fill-none"
               }`}
             />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-2">
             {note.isLocked && (
-              <Lock className="w-3 h-3 flex-shrink-0 text-gray-500" />
+              <Lock className="w-3 h-3 flex-shrink-0 text-gray-400" />
             )}
-            <h3 className="font-semibold text-sm truncate pr-6">{title}</h3>
+            <h3 className="font-bold text-sm truncate pr-6 text-gray-800">
+              {title}
+            </h3>
           </div>
 
-          <p className="text-xs text-gray-600 mt-2 flex-grow overflow-hidden">
-            {note.isLocked ? "Note is locked" : preview}
+          <p className="text-xs text-gray-500 flex-grow overflow-hidden leading-relaxed">
+            {preview}
           </p>
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Content className="glass-morphism w-48 rounded-md shadow-lg p-2 z-50">
+
+      {/* Context Menu (Same as List Item) */}
+      <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
         <ContextMenu.Item
           onSelect={() => onTogglePin(new MouseEvent("click") as any)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
         >
           <Pin className="w-4 h-4" />
           {note.isPinned ? "Unpin Note" : "Pin Note"}
         </ContextMenu.Item>
         <ContextMenu.Item
           onSelect={note.isLocked ? onUnlock : onLock}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
         >
           <Lock className="w-4 h-4" />
           {note.isLocked ? "Unlock Note" : "Lock Note"}
         </ContextMenu.Item>
         <ContextMenu.Item
           onSelect={onTags}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
         >
           <Tag className="w-4 h-4" />
           Tags
         </ContextMenu.Item>
-        <ContextMenu.Separator className="h-px bg-gray-200 my-1" />
+        <ContextMenu.Separator className="h-px bg-gray-100 my-1" />
         <ContextMenu.Item
           onSelect={onDelete}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-200 focus:outline-none focus:bg-gray-200 text-red-600"
+          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-red-50 outline-none text-red-600"
         >
           <Trash2 className="w-4 h-4" />
           Delete Note
@@ -275,7 +310,6 @@ function NoteGalleryItem({
   );
 }
 
-// (TrashListItem - unchanged)
 function TrashListItem({
   note,
   onRecover,
@@ -291,32 +325,31 @@ function TrashListItem({
     : "Recently";
 
   return (
-    <div className="relative p-4 border-b border-gray-200 group">
-      <h3 className="font-semibold text-sm truncate pr-6 text-gray-700">
+    <div className="relative p-4 border-b border-gray-200 group bg-gray-50/50 hover:bg-gray-50">
+      <h3 className="font-semibold text-sm truncate pr-6 text-gray-600 line-through opacity-70">
         {title}
       </h3>
-      <p className="text-xs text-gray-500 truncate">Deleted: {deletedDate}</p>
-      <div className="flex items-center gap-4 mt-2">
+      <p className="text-xs text-gray-400 truncate">Deleted: {deletedDate}</p>
+      <div className="flex items-center gap-4 mt-3">
         <button
           onClick={onRecover}
-          className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
         >
           <RotateCcw className="w-3 h-3" />
           Recover
         </button>
         <button
           onClick={onDelete}
-          className="flex items-center gap-1 text-xs text-red-600 hover:underline"
+          className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
         >
           <Trash2 className="w-3 h-3" />
-          Delete Permanently
+          Delete Forever
         </button>
       </div>
     </div>
   );
 }
 
-// (EmptyTrashModal - unchanged)
 function EmptyTrashModal({
   onClose,
   onConfirm,
@@ -327,23 +360,25 @@ function EmptyTrashModal({
   return (
     <Dialog.Root open onOpenChange={onClose}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-96 p-6">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm" />
+        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-96 p-6 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex flex-col items-center text-center">
-            <AlertTriangle className="w-12 h-12 mb-4 text-red-500" />
-            <Dialog.Title className="text-lg font-semibold mb-2">
+            <div className="bg-red-50 p-3 rounded-full mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <Dialog.Title className="text-lg font-bold mb-2 text-gray-900">
               Empty Trash?
             </Dialog.Title>
-            <Dialog.Description className="text-sm text-gray-600 mb-6">
-              Are you sure you want to permanently delete all notes in the
-              trash? This action cannot be undone.
+            <Dialog.Description className="text-sm text-gray-500 mb-6 leading-relaxed">
+              This will permanently delete all notes in the trash. This action
+              cannot be undone.
             </Dialog.Description>
           </div>
           <div className="flex justify-end gap-3">
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="px-4 py-2 text-sm font-medium bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none"
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -351,7 +386,7 @@ function EmptyTrashModal({
             <button
               type="button"
               onClick={onConfirm}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
             >
               Delete All
             </button>
@@ -362,7 +397,6 @@ function EmptyTrashModal({
   );
 }
 
-// (TooltipButton - unchanged)
 const TooltipButton = ({
   children,
   label,
@@ -370,16 +404,16 @@ const TooltipButton = ({
   children: React.ReactNode;
   label: string;
 }) => (
-  <Tooltip.Provider delayDuration={100}>
+  <Tooltip.Provider delayDuration={300}>
     <Tooltip.Root>
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
-          className="bg-black text-white px-2 py-1 rounded text-xs shadow-lg z-50"
+          className="bg-gray-900 text-white px-2 py-1 rounded text-[10px] font-medium shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100"
           sideOffset={5}
         >
           {label}
-          <Tooltip.Arrow className="fill-black" />
+          <Tooltip.Arrow className="fill-gray-900" />
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>
@@ -420,7 +454,9 @@ export function NoteList({
 
   type SortKey = "updatedAt" | "createdAt" | "title";
   const [viewType, setViewType] = useState<"list" | "gallery">("list");
+
   const [sortOrder, setSortOrder] = useState<SortKey>("updatedAt");
+
   const [isGrouped, setIsGrouped] = useState(true);
 
   const [tagModalNote, setTagModalNote] = useState<Note | null>(null);
@@ -482,10 +518,7 @@ export function NoteList({
   const groupTitles = Object.keys(groupedNotes);
 
   const handleNewNote = async () => {
-    // [FIX #3] Check if the current view is 'quick'
     const isQuickNote = selectedView === "quick";
-
-    // [FIX #3] Determine the folderId. Only set if not 'all', 'quick', or 'trash'
     const folderId =
       selectedView !== "all" &&
       selectedView !== "quick" &&
@@ -498,16 +531,16 @@ export function NoteList({
       title: "New Note",
       content: "",
       folderId: folderId,
-      isQuickNote: isQuickNote, // [FIX #3] Pass the flag to the hook
+      isQuickNote: isQuickNote,
     });
 
     setActiveNoteId(newNote.id);
   };
 
   const viewTitle = useMemo(() => {
-    if (selectedView === "all") return "Notes";
+    if (selectedView === "all") return "All Notes";
     if (selectedView === "quick") return "Quick Notes";
-    if (selectedView === "trash") return "Recently Deleted";
+    if (selectedView === "trash") return "Trash";
     if (selectedView.startsWith("tag-"))
       return `#${selectedView.replace("tag-", "")}`;
     return "Folder";
@@ -524,7 +557,9 @@ export function NoteList({
     setPendingActionNote(note);
     setPendingActionType("lock");
     if (metadata?.hasNotesPassword) {
-      setShowVerifyPasswordModal(true);
+      lockNote(note.id);
+      setPendingActionNote(null);
+      setPendingActionType(null);
     } else {
       setShowCreatePasswordModal(true);
     }
@@ -563,150 +598,153 @@ export function NoteList({
   };
 
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Pane 2 Toolbar (unchanged) */}
-      <div className="flex justify-between items-center p-3 h-[44px] box-border border-b border-gray-200">
-        {isSidebarCollapsed && (
-          <TooltipButton label="Show Sidebar">
-            <button
-              type="button"
-              className="bg-transparent border-none rounded-md cursor-pointer text-gray-600 p-1 hover:bg-gray-200"
-              title="Show Sidebar"
-              onClick={onToggleSidebar}
-            >
-              <PanelRightClose className="w-4 h-4" strokeWidth={2.5} />
-            </button>
-          </TooltipButton>
-        )}
-        <div className="flex-grow text-left pl-2">
-          <h2 className="text-sm font-semibold m-0">{viewTitle}</h2>
-          <p className="text-xs text-gray-500">{filteredNotes.length} Notes</p>
+    <div className="flex flex-col h-full relative bg-white">
+      {/* Toolbar */}
+      <div className="flex justify-between items-center px-4 h-[52px] box-border border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          {isSidebarCollapsed && (
+            <TooltipButton label="Expand Sidebar">
+              <button
+                type="button"
+                className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-md transition-colors"
+                onClick={onToggleSidebar}
+              >
+                <PanelRightClose className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </TooltipButton>
+          )}
+          <div>
+            <h2 className="text-sm font-bold text-gray-800 m-0 leading-none">
+              {viewTitle}
+            </h2>
+            <p className="text-[10px] font-medium text-gray-400 mt-0.5">
+              {filteredNotes.length} notes
+            </p>
+          </div>
         </div>
 
-        {!isTrashView && (
-          <TooltipButton label="New Note">
-            <button
-              type="button"
-              className="bg-transparent border-none rounded-md cursor-pointer text-gray-600 p-1 hover:bg-gray-200"
-              onClick={handleNewNote}
-            >
-              <SquarePen className="w-4 h-4" strokeWidth={2.5} />
-            </button>
-          </TooltipButton>
-        )}
-
-        {isTrashView && filteredNotes.length > 0 && (
-          <TooltipButton label="Empty Trash">
-            <button
-              type="button"
-              onClick={() => setShowConfirm(true)}
-              className="bg-transparent border-none rounded-md cursor-pointer text-red-600 p-1 hover:bg-gray-200"
-            >
-              <Trash2 className="w-4 h-4" strokeWidth={2.5} />
-            </button>
-          </TooltipButton>
-        )}
-
-        {/* 3-Dot Menu (Updated) */}
-        {!isTrashView && (
-          <DropdownMenu.Root>
-            <TooltipButton label="View Options">
-              <DropdownMenu.Trigger asChild>
-                <button
-                  type="button"
-                  className="bg-transparent border-none rounded-md cursor-pointer text-gray-600 p-1 hover:bg-gray-200"
-                >
-                  <MoreHorizontal className="w-4 h-4" strokeWidth={2.5} />
-                </button>
-              </DropdownMenu.Trigger>
-            </TooltipButton>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="glass-morphism bg-white rounded-md shadow-lg p-2 z-50 border border-gray-200 w-56"
-                sideOffset={5}
+        <div className="flex items-center gap-1">
+          {!isTrashView && (
+            <TooltipButton label="New Note">
+              <button
+                type="button"
+                className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition-colors"
+                onClick={handleNewNote}
               >
-                <DropdownMenu.Item
-                  onSelect={() => setViewType("gallery")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                >
-                  <GalleryVertical className="w-4 h-4" />
-                  View as Gallery
-                  {viewType === "gallery" && (
-                    <Check className="w-4 h-4 ml-auto" />
-                  )}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  onSelect={() => setViewType("list")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                >
-                  <List className="w-4 h-4" />
-                  View as List
-                  {viewType === "list" && <Check className="w-4 h-4 ml-auto" />}
-                </DropdownMenu.Item>
-                <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
+                <SquarePen className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </TooltipButton>
+          )}
 
-                <DropdownMenu.Sub>
-                  <DropdownMenu.SubTrigger className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100">
-                    <SortAsc className="w-4 h-4" />
-                    Sort by...
-                  </DropdownMenu.SubTrigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.SubContent
-                      className="glass-morphism bg-white rounded-md shadow-lg p-2 z-50 border border-gray-200 w-48"
-                      sideOffset={5}
-                    >
-                      <DropdownMenu.Item
-                        onSelect={() => setSortOrder("updatedAt")}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                      >
-                        Date Edited
-                        {sortOrder === "updatedAt" && (
-                          <Check className="w-4 h-4 ml-auto" />
-                        )}
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        onSelect={() => setSortOrder("createdAt")}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                      >
-                        Date Created
-                        {sortOrder === "createdAt" && (
-                          <Check className="w-4 h-4 ml-auto" />
-                        )}
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        onSelect={() => setSortOrder("title")}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
-                      >
-                        Title
-                        {sortOrder === "title" && (
-                          <Check className="w-4 h-4 ml-auto" />
-                        )}
-                      </DropdownMenu.Item>
-                    </DropdownMenu.SubContent>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Sub>
+          {isTrashView && filteredNotes.length > 0 && (
+            <TooltipButton label="Empty Trash">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(true)}
+                className="text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+              >
+                <Trash2 className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </TooltipButton>
+          )}
 
-                <DropdownMenu.Item
-                  onSelect={() => setIsGrouped(!isGrouped)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+          {!isTrashView && (
+            <DropdownMenu.Root>
+              <TooltipButton label="View Options">
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-md transition-colors"
+                  >
+                    <MoreHorizontal className="w-5 h-5" strokeWidth={2} />
+                  </button>
+                </DropdownMenu.Trigger>
+              </TooltipButton>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="bg-white rounded-lg shadow-xl p-1.5 z-50 border border-gray-100 w-48 animate-in fade-in zoom-in-95 duration-100"
+                  sideOffset={5}
+                  align="end"
                 >
-                  <CalendarDays className="w-4 h-4" />
-                  Group by Date
-                  {isGrouped && <Check className="w-4 h-4 ml-auto" />}
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        )}
+                  <DropdownMenu.Item
+                    onSelect={() => setViewType("gallery")}
+                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                  >
+                    <GalleryVertical className="w-4 h-4" /> Gallery{" "}
+                    {viewType === "gallery" && (
+                      <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => setViewType("list")}
+                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                  >
+                    <List className="w-4 h-4" /> List{" "}
+                    {viewType === "list" && (
+                      <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
+
+                  <DropdownMenu.Sub>
+                    <DropdownMenu.SubTrigger className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700">
+                      <SortAsc className="w-4 h-4" /> Sort by...
+                    </DropdownMenu.SubTrigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.SubContent
+                        className="bg-white rounded-lg shadow-xl p-1.5 z-50 border border-gray-100 w-48 animate-in fade-in zoom-in-95 duration-100"
+                        sideOffset={5}
+                      >
+                        <DropdownMenu.Item
+                          onSelect={() => setSortOrder("updatedAt")}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                        >
+                          Date Edited
+                          {sortOrder === "updatedAt" && (
+                            <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                          )}
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          onSelect={() => setSortOrder("createdAt")}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                        >
+                          Date Created
+                          {sortOrder === "createdAt" && (
+                            <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                          )}
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          onSelect={() => setSortOrder("title")}
+                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                        >
+                          Title
+                          {sortOrder === "title" && (
+                            <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                          )}
+                        </DropdownMenu.Item>
+                      </DropdownMenu.SubContent>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Sub>
+
+                  <DropdownMenu.Item
+                    onSelect={() => setIsGrouped(!isGrouped)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                  >
+                    <CalendarDays className="w-4 h-4" /> Group by Date{" "}
+                    {isGrouped && (
+                      <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                    )}
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          )}
+        </div>
       </div>
 
-      {/* Note List Wrapper (unchanged) */}
-      <div
-        className="flex-1 overflow-y-auto 
-                   [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-      >
+      {/* Note List */}
+      <div className="flex-1 overflow-y-auto bg-white custom-scrollbar">
         {isTrashView ? (
-          // --- TRASH VIEW ---
           <div>
             {filteredNotes && filteredNotes.length > 0 ? (
               filteredNotes.map((note) => (
@@ -718,14 +756,14 @@ export function NoteList({
                 />
               ))
             ) : (
-              <p className="p-4 text-sm text-center text-gray-500">
-                No notes in Recently Deleted.
-              </p>
+              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                <Trash2 size={32} className="mb-2 opacity-20" />
+                <p className="text-xs">Trash is empty</p>
+              </div>
             )}
           </div>
         ) : viewType === "gallery" ? (
-          // --- GALLERY VIEW ---
-          <div className="grid grid-cols-2 gap-3 p-3">
+          <div className="grid grid-cols-2 gap-3 p-4">
             {sortedNotes.map((note) => (
               <NoteGalleryItem
                 key={note.id}
@@ -744,10 +782,9 @@ export function NoteList({
             ))}
           </div>
         ) : isGrouped ? (
-          // --- LIST VIEW (GROUPED) ---
           groupTitles.map((title) => (
             <div key={title}>
-              <h4 className="text-xs font-semibold text-gray-600 px-4 pt-3 pb-1">
+              <h4 className="text-[11px] font-bold text-gray-400 px-5 pt-4 pb-2 uppercase tracking-wider bg-white sticky top-0 z-10">
                 {title}
               </h4>
               {groupedNotes[title].map((note) => (
@@ -769,7 +806,6 @@ export function NoteList({
             </div>
           ))
         ) : (
-          // --- LIST VIEW (NOT GROUPED) ---
           <div>
             {sortedNotes.map((note) => (
               <NoteListItem
@@ -791,21 +827,21 @@ export function NoteList({
         )}
 
         {!isTrashView && filteredNotes && filteredNotes.length === 0 && (
-          <p className="p-4 text-sm text-center text-gray-500">
-            No notes in this view.
-          </p>
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <SquarePen size={40} className="mb-3 opacity-20" />
+            <p className="text-sm font-medium">No notes found</p>
+            <p className="text-xs mt-1">Create a new note to get started</p>
+          </div>
         )}
       </div>
 
-      {/* Render the confirmation modal */}
+      {/* Modals */}
       {showConfirm && (
         <EmptyTrashModal
           onClose={() => setShowConfirm(false)}
           onConfirm={handleEmptyTrash}
         />
       )}
-
-      {/* Render Lock Modals */}
       {showCreatePasswordModal && (
         <CreateNotePasswordModal
           onClose={() => {
@@ -824,13 +860,11 @@ export function NoteList({
           onSuccess={onVerifySuccess}
         />
       )}
-
-      {/* [FIX] Render the new TagsModal */}
       {tagModalNote && (
         <TagsModal
           note={tagModalNote}
           onClose={() => setTagModalNote(null)}
-          allTags={allTagsSet} // [FIX] Pass the Set of tags
+          allTags={allTagsSet}
         />
       )}
     </div>

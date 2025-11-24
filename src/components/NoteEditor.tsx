@@ -8,7 +8,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-// [FIX] Rename Tiptap's 'Node' to 'TiptapNode' to avoid conflict
+import { createPortal } from "react-dom";
 import {
   useEditor,
   EditorContent,
@@ -34,6 +34,10 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 
+import tippy, { Instance as TippyInstance } from "tippy.js";
+import "tippy.js/dist/tippy.css";
+import "tippy.js/dist/svg-arrow.css";
+
 import { useNotes, useUserMetadata } from "@/lib/db/useNotes";
 import db, { type Note } from "@/lib/db/clientDb";
 import { EditorToolbar } from "./EditorToolbar";
@@ -49,15 +53,17 @@ import {
   EyeOff,
   Search as SearchIcon,
   FileText,
+  Trash2,
 } from "lucide-react";
 import { uploadToS3 } from "@/lib/uploadToS3";
+import { deleteFromS3 } from "@/lib/deleteFromS3";
 import { AudioRecorder } from "./AudioRecorder";
 import {
   CreateNotePasswordModal,
   VerifyNotePasswordModal,
 } from "./NotePasswordModals";
 
-// (Module declaration is unchanged)
+// --- Module Declaration ---
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     video: {
@@ -66,10 +72,13 @@ declare module "@tiptap/core" {
     audio: {
       setAudio: (options: { src: string }) => ReturnType;
     };
+    file: {
+      setFile: (options: { src: string; name: string }) => ReturnType;
+    };
   }
 }
 
-// (Debounce hook is unchanged)
+// --- Custom Hooks ---
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -79,7 +88,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// (Snippet generator is unchanged)
+// --- Helper Functions ---
 function getSnippet(content: string, term: string) {
   const el = document.createElement("div");
   el.innerHTML = content;
@@ -108,7 +117,8 @@ function getSnippet(content: string, term: string) {
   return snippet;
 }
 
-// --- AddLinkModal (No changes) ---
+// --- Components ---
+
 function AddLinkModal({
   editor,
   onClose,
@@ -219,7 +229,8 @@ function AddLinkModal({
   );
 }
 
-// --- Custom Video/Audio Extensions (Unchanged) ---
+// --- Custom Video/Audio/File Extensions ---
+
 const CustomVideo = TiptapNode.create({
   name: "video",
   group: "block",
@@ -231,7 +242,25 @@ const CustomVideo = TiptapNode.create({
     return [{ tag: "video[src]" }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ["video", mergeAttributes(HTMLAttributes)];
+    return [
+      "div",
+      {
+        // [FIX #1.2] Tighter wrapper for video
+        class:
+          "media-node video-player my-4 mx-auto rounded-xl overflow-hidden shadow-sm border border-gray-200",
+        "data-media-wrapper": "true",
+        style:
+          "width: fit-content; max-width: 400px; display: table; margin-left: auto; margin-right: auto;",
+      },
+      [
+        "video",
+        mergeAttributes(HTMLAttributes, {
+          class: "block",
+          style:
+            "max-width: 100%; height: auto; max-height: 350px; object-fit: contain; background-color: #000;",
+        }),
+      ],
+    ];
   },
   addCommands() {
     return {
@@ -243,6 +272,7 @@ const CustomVideo = TiptapNode.create({
     };
   },
 });
+
 const CustomAudio = TiptapNode.create({
   name: "audio",
   group: "block",
@@ -256,8 +286,12 @@ const CustomAudio = TiptapNode.create({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      { class: "audio-player" },
-      ["audio", mergeAttributes(HTMLAttributes)],
+      {
+        class:
+          "media-node audio-player my-4 mx-auto max-w-md p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:border-blue-300 transition-colors",
+        "data-media-wrapper": "true",
+      },
+      ["audio", mergeAttributes(HTMLAttributes, { class: "w-full" })],
     ];
   },
   addCommands() {
@@ -271,7 +305,97 @@ const CustomAudio = TiptapNode.create({
   },
 });
 
-// --- LockedNoteScreen (Unchanged) ---
+const CustomFile = TiptapNode.create({
+  name: "file",
+  group: "block",
+  atom: true,
+  addAttributes() {
+    return {
+      src: { default: null },
+      name: { default: "Attachment" },
+    };
+  },
+  parseHTML() {
+    return [{ tag: "div[data-file-attachment]" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      {
+        class: "media-node file-attachment my-3 mx-auto max-w-sm",
+        "data-media-wrapper": "true",
+        "data-file-attachment": "true",
+      },
+      [
+        "a",
+        {
+          href: HTMLAttributes.src,
+          target: "_blank",
+          rel: "noopener noreferrer",
+          class:
+            "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 transition-all no-underline group cursor-pointer",
+        },
+        [
+          "div",
+          {
+            class:
+              "p-2 bg-blue-50 rounded-full text-blue-600 group-hover:bg-blue-100 transition-colors",
+          },
+          [
+            "svg",
+            {
+              xmlns: "http://www.w3.org/2000/svg",
+              width: "20",
+              height: "20",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              "stroke-width": "2",
+              "stroke-linecap": "round",
+              "stroke-linejoin": "round",
+            },
+            [
+              "path",
+              {
+                d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z",
+              },
+            ],
+            ["polyline", { points: "14 2 14 8 20 8" }],
+          ],
+        ],
+        [
+          "div",
+          { class: "flex flex-col overflow-hidden" },
+          [
+            "span",
+            // [FIX #1.3] Display PDF Name
+            {
+              class:
+                "text-sm font-medium text-gray-700 truncate block max-w-[200px]",
+            },
+            HTMLAttributes.name,
+          ],
+          [
+            "span",
+            { class: "text-[10px] text-gray-400 uppercase" },
+            "Document",
+          ],
+        ],
+      ],
+    ];
+  },
+  addCommands() {
+    return {
+      setFile:
+        (options: { src: string; name: string }) =>
+        ({ commands }: any) => {
+          return commands.insertContent({ type: this.name, attrs: options });
+        },
+    };
+  },
+});
+
+// --- LockedNoteScreen ---
 function LockedNoteScreen({
   onUnlockSubmit,
   error,
@@ -301,6 +425,8 @@ function LockedNoteScreen({
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            name="lock_screen_pwd_field"
             className="w-full border border-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
             autoFocus
           />
@@ -328,7 +454,7 @@ function LockedNoteScreen({
   );
 }
 
-// --- Custom Tiptap Extensions (Unchanged) ---
+// --- Custom Tiptap Extensions ---
 const CustomListItem = ListItem.extend({
   addKeyboardShortcuts() {
     return {
@@ -387,6 +513,7 @@ export function NoteEditor({
   const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
   const [showVerifyPasswordModal, setShowVerifyPasswordModal] = useState(false);
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
+
   const [pendingAction, setPendingAction] = useState<"lock" | "unlock" | null>(
     null
   );
@@ -397,7 +524,14 @@ export function NoteEditor({
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
 
-  // (Search results with snippets logic is unchanged)
+  // Media Deletion Refs
+  const menuContainerRef = useRef<HTMLDivElement | null>(null);
+  const tippyInstance = useRef<TippyInstance | null>(null);
+  const lastSelectedPos = useRef<number | null>(null);
+  const [isDeletingMedia, setIsDeletingMedia] = useState(false);
+
+  const [, setUpdateTrigger] = useState({});
+
   const searchResults = useMemo(() => {
     if (!searchTerm) return null;
     if (!notes) return [];
@@ -426,7 +560,7 @@ export function NoteEditor({
       Heading.configure({ levels: [1, 2, 3] }),
       BulletList,
       OrderedList,
-      CustomListItem, // Use our custom ListItem
+      CustomListItem,
       History,
       Dropcursor,
       Gapcursor,
@@ -434,29 +568,217 @@ export function NoteEditor({
       HorizontalRule,
       Placeholder.configure({ placeholder: "Start writing..." }),
       TaskList,
-      CustomTaskItem.configure({ nested: true }), // Use our custom TaskItem
+      CustomTaskItem.configure({ nested: true }),
       Link.configure({ openOnClick: true, autolink: true }),
+      // [FIX #1.1] Image Styling (Match video size)
       Image.configure({
         inline: false,
         allowBase64: true,
+        HTMLAttributes: {
+          class: "rounded-lg shadow-sm border border-gray-100",
+          style:
+            "max-width: 400px; max-height: 350px; object-fit: contain; display: block; margin: 1rem auto;",
+        },
       }),
       CustomVideo,
       CustomAudio,
+      CustomFile,
     ],
     content: "",
+    onTransaction: () => {
+      setUpdateTrigger({});
+    },
     onUpdate: ({ editor }) => {
       setCurrentContent(editor.getHTML());
     },
     editable: false,
     editorProps: {
       attributes: {
-        class: "tiptap-styles p-4 focus:outline-none",
+        class:
+          "tiptap-styles p-6 focus:outline-none prose prose-sm max-w-none min-h-full [&_img.ProseMirror-selectednode]:ring-2 [&_img.ProseMirror-selectednode]:ring-blue-500 [&_.media-node.ProseMirror-selectednode]:ring-2 [&_.media-node.ProseMirror-selectednode]:ring-blue-500 [&_.media-node]:outline-none",
       },
     },
     immediatelyRender: false,
   });
 
-  // (Click outside handler is unchanged)
+  // --- Media Deletion Logic ---
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const container = document.createElement("div");
+      container.setAttribute("data-tippy-menu", "true");
+      menuContainerRef.current = container;
+      document.body.appendChild(container);
+
+      tippyInstance.current = tippy(document.body, {
+        content: container,
+        trigger: "manual",
+        interactive: true,
+        placement: "right",
+        appendTo: document.body,
+        animation: "shift-away",
+        zIndex: 9999,
+        arrow: true,
+        offset: [0, 10],
+      });
+
+      return () => {
+        tippyInstance.current?.destroy();
+        if (menuContainerRef.current?.parentNode) {
+          menuContainerRef.current.parentNode.removeChild(
+            menuContainerRef.current
+          );
+        }
+      };
+    }
+  }, []);
+
+  const updateBubble = useCallback(() => {
+    if (!editor || !tippyInstance.current) return;
+    const { state, view } = editor;
+    const { from } = state.selection;
+    const node = state.doc.nodeAt(from);
+
+    const isMedia =
+      !!node &&
+      (node.type.name === "image" ||
+        node.type.name === "audio" ||
+        node.type.name === "video" ||
+        node.type.name === "file");
+
+    if (!isMedia) {
+      tippyInstance.current.hide();
+      return;
+    }
+
+    const domNode = view.nodeDOM(from) as HTMLElement;
+    let targetElement = domNode;
+
+    // Handle wrappers
+    if (
+      node.type.name === "audio" ||
+      node.type.name === "video" ||
+      node.type.name === "file"
+    ) {
+      let selector = `[data-media-wrapper] ${node.type.name}[src="${node.attrs.src}"]`;
+      if (node.type.name === "file") selector = `[data-file-attachment]`;
+
+      const wrapper = view.dom.querySelector(selector)?.closest(".media-node");
+
+      if (wrapper) {
+        targetElement = wrapper as HTMLElement;
+      } else if (domNode && domNode.classList.contains("media-node")) {
+        targetElement = domNode;
+      }
+    }
+
+    let rect;
+    if (targetElement && targetElement.getBoundingClientRect) {
+      rect = targetElement.getBoundingClientRect();
+    } else {
+      const coords = view.coordsAtPos(from);
+      rect = {
+        width: 0,
+        height: 0,
+        top: coords.top,
+        bottom: coords.bottom,
+        left: coords.left,
+        right: coords.right,
+      };
+    }
+
+    tippyInstance.current.setProps({
+      getReferenceClientRect: () => rect as DOMRect,
+    });
+    tippyInstance.current.show();
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+
+    const clickHandler = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const isImg = target.tagName === "IMG";
+      const mediaWrapper = target.closest(".media-node");
+
+      const isControls =
+        target.tagName === "AUDIO" ||
+        target.tagName === "VIDEO" ||
+        target.tagName === "INPUT" ||
+        target.className.includes("controls");
+
+      const isMediaClick = isImg || (mediaWrapper && !isControls);
+
+      if (mediaWrapper && isControls) {
+        return;
+      }
+
+      if (isMediaClick) {
+        setTimeout(() => {
+          const { from } = editor.state.selection;
+          const isReClicking = lastSelectedPos.current === from;
+
+          if (isReClicking) {
+            // Toggle Off
+            const node = editor.state.doc.nodeAt(from);
+            if (node) {
+              const afterPos = from + node.nodeSize;
+              editor.chain().focus().setTextSelection(afterPos).run();
+              tippyInstance.current?.hide();
+              lastSelectedPos.current = null;
+            }
+          } else {
+            // Select
+            updateBubble();
+            lastSelectedPos.current = from;
+          }
+        }, 50);
+      } else {
+        tippyInstance.current?.hide();
+        lastSelectedPos.current = null;
+      }
+    };
+
+    dom.addEventListener("click", clickHandler);
+    const scrollHandler = () => {
+      tippyInstance.current?.hide();
+    };
+    window.addEventListener("scroll", scrollHandler, true);
+
+    return () => {
+      dom.removeEventListener("click", clickHandler);
+      window.removeEventListener("scroll", scrollHandler, true);
+    };
+  }, [editor, updateBubble]);
+
+  const deleteSelectedMedia = useCallback(async () => {
+    if (!editor) return;
+    setIsDeletingMedia(true);
+    const { state } = editor;
+    const { from } = state.selection;
+    const node = state.doc.nodeAt(from);
+
+    if (
+      node &&
+      (node.type.name === "image" ||
+        node.type.name === "audio" ||
+        node.type.name === "video" ||
+        node.type.name === "file")
+    ) {
+      const src = node.attrs.src;
+      if (src) await deleteFromS3(src);
+      editor.chain().focus().deleteSelection().run();
+      setCurrentContent(editor.getHTML());
+
+      tippyInstance.current?.hide();
+      lastSelectedPos.current = null;
+    }
+    setIsDeletingMedia(false);
+  }, [editor]);
+
+  // --- End Media Deletion Logic ---
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -472,8 +794,10 @@ export function NoteEditor({
     };
   }, []);
 
-  // (Data loading logic is unchanged)
   useEffect(() => {
+    setSessionPassword(null);
+    setLockError("");
+
     if (!activeNoteId) {
       editor?.setEditable(false);
       editor?.commands.clearContent();
@@ -482,8 +806,6 @@ export function NoteEditor({
       setCurrentContent("");
       setOriginalContent("");
       setActiveNote(null);
-      setSessionPassword(null);
-      setLockError("");
       isInitialLoad.current = true;
       return;
     }
@@ -492,9 +814,8 @@ export function NoteEditor({
       const note = await db.notes.get(activeNoteId);
       if (note) {
         setActiveNote(note);
-        setLockError("");
 
-        if (note.isLocked && !sessionPassword) {
+        if (note.isLocked) {
           editor?.commands.clearContent();
           editor?.setEditable(false);
         } else {
@@ -513,12 +834,11 @@ export function NoteEditor({
       }
     };
     loadNote();
-  }, [activeNoteId, editor, sessionPassword]);
+  }, [activeNoteId, editor]);
 
-  // (hasChanges logic is unchanged)
   const hasChanges = useMemo(() => {
     if (!activeNoteId || !activeNote) return false;
-    if (activeNote.isLocked) return false;
+    if (activeNote.isLocked && !sessionPassword) return false;
     return title !== originalTitle || currentContent !== originalContent;
   }, [
     title,
@@ -527,10 +847,9 @@ export function NoteEditor({
     originalContent,
     activeNoteId,
     activeNote,
+    sessionPassword,
   ]);
 
-  // --- [FIX] Auto-Save Logic ---
-  // Changed the delay from 2000ms to 500ms for a faster "auto-save" feel
   const debouncedTitle = useDebounce(title, 500);
   const debouncedContent = useDebounce(currentContent, 500);
 
@@ -538,7 +857,6 @@ export function NoteEditor({
     if (isInitialLoad.current || !activeNoteId || !editor?.isEditable) {
       return;
     }
-    // Check if the debounced values have changed from the original
     if (
       debouncedTitle !== originalTitle ||
       debouncedContent !== originalContent
@@ -548,8 +866,6 @@ export function NoteEditor({
         content: debouncedContent,
         title: debouncedTitle,
       });
-      // Update the "original" state so we don't save again
-      // until the *next* change.
       setOriginalTitle(debouncedTitle);
       setOriginalContent(debouncedContent);
     }
@@ -562,9 +878,7 @@ export function NoteEditor({
     originalTitle,
     originalContent,
   ]);
-  // --- END OF FIX ---
 
-  // (Manual Save logic is unchanged)
   const handleSave = () => {
     if (!editor || !activeNoteId || !hasChanges) return;
     updateNote(activeNoteId, {
@@ -575,7 +889,6 @@ export function NoteEditor({
     setOriginalContent(currentContent);
   };
 
-  // (File Upload logic is unchanged)
   const handleFileUpload = async (files: FileList | File[] | null) => {
     if (!activeNoteId || !files || !editor) return;
     setIsUploading(true);
@@ -610,13 +923,8 @@ export function NoteEditor({
         ) {
           editor.chain().focus().setAudio({ src: url }).run();
         } else {
-          editor
-            .chain()
-            .focus()
-            .insertContent(
-              `<a href="${url}" target="_blank" rel="noopener noreferrer">${file.name}</a>`
-            )
-            .run();
+          // [FIX #1.3] Pass file name to CustomFile extension
+          editor.chain().focus().setFile({ src: url, name: file.name }).run();
         }
       }
     } catch (error) {
@@ -625,7 +933,6 @@ export function NoteEditor({
     setIsUploading(false);
   };
 
-  // (Add Link logic is unchanged)
   const handleAddLink = useCallback(() => {
     if (!editor) return;
     const { from, to } = editor.state.selection;
@@ -635,7 +942,6 @@ export function NoteEditor({
     setIsLinkModalOpen(true);
   }, [editor]);
 
-  // (Enter Key logic is unchanged)
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -643,14 +949,12 @@ export function NoteEditor({
     }
   };
 
-  // (Delete Note logic is unchanged)
   const handleDeleteNote = () => {
     if (!activeNoteId) return;
     deleteNote(activeNoteId);
     setActiveNoteId(null);
   };
 
-  // (Password logic is unchanged)
   const onVerifySuccess = (password: string) => {
     setSessionPassword(password);
     setShowVerifyPasswordModal(false);
@@ -675,6 +979,7 @@ export function NoteEditor({
     setActiveNote({ ...activeNote, isLocked: true });
     editor?.commands.clearContent();
     editor?.setEditable(false);
+    setSessionPassword(null);
   };
   const performUnlock = () => {
     if (!activeNote) return;
@@ -683,6 +988,7 @@ export function NoteEditor({
     editor?.commands.setContent(originalContent, { emitUpdate: false });
     editor?.setEditable(true);
   };
+
   const handleToggleLock = () => {
     if (!activeNote) return;
     setLockError("");
@@ -692,12 +998,13 @@ export function NoteEditor({
     } else {
       setPendingAction("lock");
       if (metadata?.hasNotesPassword) {
-        setShowVerifyPasswordModal(true);
+        performLock();
       } else {
         setShowCreatePasswordModal(true);
       }
     }
   };
+
   const handleUnlockSubmit = async (password: string) => {
     setLockError("");
     if (!password) {
@@ -720,31 +1027,23 @@ export function NoteEditor({
     }
   };
 
-  // (Search click logic is unchanged)
   const handleSearchResultClick = (noteId: string) => {
     setActiveNoteId(noteId);
     setSearchTerm("");
   };
 
-  // (Click Anywhere to Edit logic is unchanged)
   const handleContainerClick = (e: React.MouseEvent) => {
     if (!editor || !editor.isEditable) return;
-
-    // Check if the click was on the editor itself or the title input
     const editorEl = editor.view.dom;
     const titleEl = e.currentTarget.querySelector(
       'input[placeholder="Note Title"]'
     );
-
     if (
       editorEl.contains(e.target as Node) ||
       titleEl?.contains(e.target as Node)
     ) {
-      // Click was inside the title or the Tiptap editor, let them handle it
       return;
     }
-
-    // Click was in the empty container space, so focus the editor at the end
     editor
       .chain()
       .focus()
@@ -752,12 +1051,26 @@ export function NoteEditor({
       .run();
   };
 
-  // --- Render Logic ---
+  const floatingMenu = (
+    <div className="bg-gray-900 text-white rounded-lg shadow-xl px-3 py-2 flex items-center gap-2 text-xs font-medium">
+      <button
+        onClick={deleteSelectedMedia}
+        className="flex items-center gap-1 hover:text-red-400 transition-colors"
+      >
+        {isDeletingMedia ? (
+          <Loader2 size={14} className="animate-spin" />
+        ) : (
+          <Trash2 size={14} />
+        )}
+        <span>Delete</span>
+      </button>
+    </div>
+  );
 
   return (
     <Tooltip.Provider delayDuration={100}>
       <div className="flex flex-col h-full relative">
-        {/* Search bar with Tooltip (unchanged) */}
+        {/* Search bar */}
         <div
           className="flex-shrink-0 p-2 border-b border-gray-200 relative"
           ref={searchWrapperRef}
@@ -788,7 +1101,6 @@ export function NoteEditor({
             </Tooltip.Portal>
           </Tooltip.Root>
 
-          {/* Search Results Dropdown with Snippets (unchanged) */}
           {searchResults && (
             <div className="absolute top-full left-2 right-2 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-80 overflow-y-auto">
               {searchResults.length === 0 ? (
@@ -820,25 +1132,23 @@ export function NoteEditor({
           )}
         </div>
 
-        {/* Editor Toolbar (Help props removed) (unchanged) */}
+        {/* Editor Toolbar */}
         <EditorToolbar
           editor={editor}
           mediaInputRef={mediaInputRef}
           docInputRef={docInputRef}
           onAddLink={handleAddLink}
-          // onHelpClick={() => setIsHelpModalOpen(true)} // Removed
           onRecordAudioClick={() => setIsAudioModalOpen(true)}
           isLocked={activeNote?.isLocked || false}
           onToggleLock={handleToggleLock}
           onDeleteNote={handleDeleteNote}
         />
 
-        {/* Editor Content Area */}
+        {/* Content Area */}
         {!activeNoteId || !activeNote ? (
-          // (Unchanged)
           <div
             className="flex-1 flex items-center justify-center text-gray-500"
-            onClick={handleContainerClick} // This won't do much as editor is not editable
+            onClick={handleContainerClick}
           >
             Select a note to start editing.
           </div>
@@ -855,7 +1165,6 @@ export function NoteEditor({
                 <span>Uploading files...</span>
               </div>
             )}
-            {/* (Unchanged) */}
             <div
               className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               onClick={handleContainerClick}
@@ -866,7 +1175,7 @@ export function NoteEditor({
                 onChange={(e) => setTitle(e.target.value)}
                 onKeyDown={handleTitleKeyDown}
                 placeholder="Note Title"
-                className="text-2xl font-bold w-full p-4 focus:outline-none"
+                className="text-2xl font-bold w-full p-6 pb-0 focus:outline-none"
                 disabled={!editor?.isEditable}
               />
               <EditorContent editor={editor} />
@@ -896,7 +1205,7 @@ export function NoteEditor({
           </>
         )}
 
-        {/* Modals (unchanged) */}
+        {/* Modals */}
         {isLinkModalOpen && (
           <AddLinkModal
             editor={editor}
@@ -905,7 +1214,6 @@ export function NoteEditor({
             initialUrl={initialLinkUrl}
           />
         )}
-        {/* [FIX] Removed HelpModal */}
         {isAudioModalOpen && (
           <AudioRecorder
             onClose={() => setIsAudioModalOpen(false)}
@@ -931,7 +1239,6 @@ export function NoteEditor({
           />
         )}
 
-        {/* Hidden file inputs (unchanged) */}
         <input
           type="file"
           ref={mediaInputRef}
@@ -955,6 +1262,10 @@ export function NoteEditor({
           accept=".pdf,.doc,.docx,.txt,.csv,audio/*"
         />
       </div>
+
+      {/* Render Floating Menu Portal */}
+      {menuContainerRef.current &&
+        createPortal(floatingMenu, menuContainerRef.current)}
     </Tooltip.Provider>
   );
 }

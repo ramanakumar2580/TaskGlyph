@@ -29,7 +29,7 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
         super("TaskGlyphDB");
         // ✅ [FIX] BUMPED TO VERSION 10 for New Diary Features
         this.version(10).stores({
-            userMetadata: "userId, hasNotesPassword, notesPasswordHash",
+            userMetadata: "userId, hasNotesPassword",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
             projects: "id, name, createdAt, updatedAt",
             // [UPDATED] Added mood, tags, and isLocked to index for searching
