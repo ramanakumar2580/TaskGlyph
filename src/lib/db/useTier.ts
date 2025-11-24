@@ -12,36 +12,45 @@ export function useTier() {
   useEffect(() => {
     // 1. Define an async function to fetch and set tier
     const getAndSetTier = async (userId: string) => {
-      // 2. Try getting from local DB first for speed
+      // 2. Try getting from local DB first for speed and offline support
       const localMeta = await db.userMetadata.get(userId);
       if (localMeta) {
         setTier(localMeta.tier);
+      } else {
+        // If nothing is in local, set to 'free' as a default
+        setTier("free");
       }
 
-      // 3. Fetch from server to get the *latest* tier info
-      // We need to create this API route next
-      try {
-        const response = await fetch("/api/user/tier");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.tier) {
-            // 4. Save the latest info to local DB and update state
-            await db.userMetadata.put({
-              userId: userId,
-              tier: data.tier,
-              trialStartedAt: data.trialStartedAt || 0,
-            });
-            setTier(data.tier);
+      // 3. --- THIS IS THE FIX ---
+      // Only try to fetch from the server if we are ONLINE
+      if (navigator.onLine) {
+        try {
+          const response = await fetch("/api/user/tier");
+          if (response.ok) {
+            const data = await response.json();
+            if (data.tier) {
+              // 4. Save the latest info to local DB and update state
+              await db.userMetadata.put({
+                userId: userId,
+                tier: data.tier,
+                trialStartedAt: data.trialStartedAt || 0,
+              });
+
+              // Only update state if it's different from local
+              if (!localMeta || localMeta.tier !== data.tier) {
+                setTier(data.tier);
+              }
+            }
+          } else {
+            // If fetch fails, we've already set from local, so we're good.
+            console.error("Server responded with an error for /api/user/tier");
           }
-        } else {
-          // If fetch fails, fall back to local or 'free'
-          if (!localMeta) setTier("free");
+        } catch (error) {
+          console.error("Failed to fetch user tier:", error);
+          // If fetch fails, we're still safe because we already set from localMeta
         }
-      } catch (error) {
-        console.error("Failed to fetch user tier:", error);
-        // If fetch fails, fall back to local or 'free'
-        if (!localMeta) setTier("free");
       }
+      // If we are OFFLINE, we skip the fetch entirely and just use localMeta
     };
 
     if (status === "authenticated" && session?.user?.id) {

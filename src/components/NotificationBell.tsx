@@ -13,8 +13,6 @@ export default function NotificationBell() {
 
   const markAsRead = async (id: string) => {
     await db.notifications.update(id, { read: true });
-    // Note: We don't need to trigger sync for this,
-    // it's a client-only "read" status.
   };
 
   return (

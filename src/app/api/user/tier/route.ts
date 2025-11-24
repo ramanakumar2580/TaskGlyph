@@ -1,8 +1,8 @@
-// src/app/api/user/tier/route.ts
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/options";
 import { getServerSession } from "next-auth/next";
 import pool from "@/lib/db/serverDb";
+import { PoolClient } from "pg"; // Import PoolClient
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -13,12 +13,20 @@ export async function GET() {
 
   const userId = session.user.id;
 
+  // --- [THE FIX] ---
+  let client: PoolClient | undefined;
+
   try {
-    // Query the database for the user's tier
-    const { rows } = await pool.query(
-      "SELECT tier, trial_started_at FROM users WHERE id = $1",
+    // 1. Move the connection *inside* the try block
+    // This will now catch the 'ENOTFOUND' error when offline
+    client = await pool.connect();
+
+    // 2. Query the database
+    const { rows } = await client.query(
+      "SELECT tier FROM users WHERE id = $1", // Removed trial_started_at
       [userId]
     );
+    // --- END OF FIX ---
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -30,15 +38,21 @@ export async function GET() {
     return NextResponse.json(
       {
         tier: user.tier,
-        trial_started_at: user.trial_started_at,
-      },
+      }, // Removed trial_started_at
       { status: 200 }
     );
-  } catch (error) {
-    console.error("❌ Error fetching user tier:", error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    // This block will now safely catch the offline error
+    console.error("❌ Error fetching user tier:", error.message);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 } // Stops the crash
     );
+  } finally {
+    // 3. Always release the client if it was successfully connected
+    if (client) {
+      client.release();
+    }
   }
 }

@@ -2,12 +2,12 @@
   "pages": {
     "/app/notes/page": [
       "static/chunks/node_modules_next_dist_8db7fb1f._.js",
-      "static/chunks/src_app_favicon_ico_mjs_243aa161._.js",
+      "static/chunks/src_app_favicon_ico_mjs_007f7124._.js",
       "static/chunks/[root-of-the-server]__3cad329d._.css",
-      "static/chunks/node_modules_8d7c84bc._.js",
+      "static/chunks/node_modules_36ac55f9._.js",
       "static/chunks/src_8e58bcf3._.js",
-      "static/chunks/src_app_layout_tsx_0a548d63._.js",
-      "static/chunks/node_modules_next_dist_client_components_builtin_global-error_8b96bf31.js",
+      "static/chunks/src_app_layout_tsx_f8182b1e._.js",
+      "static/chunks/node_modules_next_dist_client_components_builtin_global-error_11bdd761.js",
       "static/chunks/src_bce93c28._.js",
       "static/chunks/node_modules_next_d0cc5409._.js",
       "static/chunks/node_modules_@headlessui_react_dist_f71151f9._.js",
@@ -18,18 +18,23 @@
       "static/chunks/node_modules_react-datepicker_dist_index_es_4982a1c7.js",
       "static/chunks/node_modules_60d7eef5._.js",
       "static/chunks/src_components_DatePicker_d40e1e5f.css",
-      "static/chunks/src_app_app_layout_tsx_8b96bf31._.js",
-      "static/chunks/src_52dcc495._.js",
-      "static/chunks/src_app_app_notes_page_tsx_fa4e4781._.js",
-      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_57d40746._.js",
+      "static/chunks/src_app_app_layout_tsx_11bdd761._.js",
+      "static/chunks/src_2745f573._.js",
+      "static/chunks/node_modules_prosemirror-view_dist_index_21ada2c5.js",
+      "static/chunks/node_modules_@tiptap_core_dist_f5afb391._.js",
+      "static/chunks/node_modules_@radix-ui_1c4d92fe._.js",
+      "static/chunks/node_modules_@tiptap_fffee11d._.js",
+      "static/chunks/node_modules_7e15e09e._.js",
+      "static/chunks/src_app_app_notes_page_tsx_d4a68a0a._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_4e3b0bdd._.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js",
       "static/chunks/node_modules_next_dist_compiled_next-devtools_index_a9cb0712.js",
       "static/chunks/node_modules_next_dist_compiled_5150ccfd._.js",
       "static/chunks/node_modules_next_dist_client_cf1d9188._.js",
       "static/chunks/node_modules_next_dist_b0daae9a._.js",
-      "static/chunks/node_modules_@swc_helpers_cjs_b3dc30d6._.js",
+      "static/chunks/4e2c9_@swc_helpers_cjs_2b52ba32._.js",
       "static/chunks/_a0ff3932._.js",
-      "static/chunks/turbopack-_cdba956c._.js"
+      "static/chunks/turbopack-_3fb52da9._.js"
     ]
   }
 }

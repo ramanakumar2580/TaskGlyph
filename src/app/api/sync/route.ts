@@ -1,10 +1,203 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 import pool from "@/lib/db/serverDb";
+import { PoolClient } from "pg"; // Import the PoolClient type
 
-// [UPDATED] Added 'notification' to the entity type
+// --- [GET FUNCTION] ---
+export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const since = searchParams.get("since") || "0";
+  const userId = session.user.id;
+
+  // ✅ --- [THE FIX] ---
+  let client: PoolClient | undefined;
+
+  try {
+    // 1. Move the connection *inside* the try block.
+    client = await pool.connect();
+
+    await client.query("BEGIN"); // Start a transaction
+    // ✅ --- END OF FIX ---
+
+    const syncTimestamp = Date.now();
+
+    const [
+      userMetadataRes,
+      projectsRes,
+      tasksRes,
+      notesRes,
+      foldersRes,
+      diaryEntriesRes,
+      pomodoroSessionsRes,
+      notificationsRes,
+    ] = await Promise.all([
+      // 1. userMetadata
+      client.query(
+        `
+          SELECT 
+            id as "userId", 
+            tier,
+            trial_started_at as "trialStartedAt",
+            (notes_password_hash IS NOT NULL) as "hasNotesPassword"
+          FROM users 
+          WHERE id = $1
+        `,
+        [userId]
+      ),
+      // 2. projects
+      client.query(
+        `
+          SELECT 
+            id, name, description,
+            accent_color as "accentColor",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM projects 
+          WHERE user_id = $1 AND updated_at > $2
+        `,
+        [userId, since]
+      ),
+      // 3. tasks
+      client.query(
+        `
+          SELECT 
+            id, title, completed, notes, priority, tags, meet_link,
+            created_at as "createdAt",
+            updated_at as "updatedAt",
+            project_id as "projectId",
+            parent_id as "parentId",
+            due_date as "dueDate",
+            recurring_schedule as "recurringSchedule",
+            reminder_at as "reminderAt",
+            reminder_30_sent,
+            reminder_20_sent,
+            reminder_10_sent
+          FROM tasks 
+          WHERE user_id = $1 AND updated_at > $2
+        `,
+        [userId, since]
+      ),
+      // 4. notes
+      client.query(
+        `
+          SELECT 
+            id, title, content, tags,
+            created_at as "createdAt",
+            updated_at as "updatedAt",
+            folder_id as "folderId",
+            is_pinned as "isPinned",
+            is_locked as "isLocked",
+            is_quick_note as "isQuickNote",
+            deleted_at as "deletedAt"
+          FROM notes 
+          WHERE user_id = $1 AND updated_at > $2
+        `,
+        [userId, since]
+      ),
+      // 5. folders
+      client.query(
+        `
+          SELECT 
+            id, name,
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM folders 
+          WHERE user_id = $1 AND updated_at > $2
+        `,
+        [userId, since]
+      ),
+      // 6. [UPDATED] diary_entries with New Fields
+      client.query(
+        `
+          SELECT 
+            id, content,
+            entry_date as "entryDate",
+            created_at as "createdAt",
+            mood,
+            energy,
+            weather,
+            location,
+            tags,
+            is_locked as "isLocked",
+            media
+          FROM diary_entries 
+          WHERE user_id = $1 AND created_at > $2
+        `,
+        [userId, since]
+      ),
+      // 7. pomodoro_sessions
+      client.query(
+        `
+          SELECT 
+            id, type,
+            duration_minutes as "durationMinutes",
+            completed_at as "completedAt"
+          FROM pomodoro_sessions 
+          WHERE user_id = $1 AND completed_at > $2
+        `,
+        [userId, since]
+      ),
+      // 8. notifications
+      client.query(
+        `
+          SELECT 
+            id, message, link, read,
+            user_id as "userId",
+            (EXTRACT(EPOCH FROM created_at) * 1000) as "createdAt"
+          FROM notifications 
+          WHERE user_id = $1 AND (EXTRACT(EPOCH FROM created_at) * 1000) > $2
+        `,
+        [userId, since]
+      ),
+    ]);
+
+    await client.query("COMMIT"); // Commit the transaction
+
+    // Return all data in a single JSON object
+    return NextResponse.json({
+      timestamp: syncTimestamp,
+      userMetadata: userMetadataRes.rows,
+      projects: projectsRes.rows,
+      tasks: tasksRes.rows,
+      notes: notesRes.rows,
+      folders: foldersRes.rows,
+      // [UPDATED] Parse JSON strings for Weather and Media before sending to client
+      diaryEntries: diaryEntriesRes.rows.map((row) => ({
+        ...row,
+        weather: row.weather ? JSON.parse(row.weather) : null,
+        media: row.media ? JSON.parse(row.media) : [],
+      })),
+      pomodoroSessions: pomodoroSessionsRes.rows,
+      notifications: notificationsRes.rows,
+    });
+  } catch (error: any) {
+    // ✅ [FIX] Rollback only if client exists
+    if (client) {
+      await client.query("ROLLBACK"); // Roll back on error
+    }
+    console.error("Failed to fetch all data for user:", userId, error);
+    return NextResponse.json(
+      { error: "Failed to fetch data: " + error.message },
+      { status: 500 }
+    );
+  } finally {
+    // ✅ [FIX] Always release the client if it was connected
+    if (client) {
+      client.release();
+    }
+  }
+}
+
+// --- [POST FUNCTION] ---
+
 type SyncOperation = {
   id: string;
   entityType:
@@ -13,7 +206,8 @@ type SyncOperation = {
     | "note"
     | "diary"
     | "pomodoro"
-    | "notification";
+    | "notification"
+    | "folder";
   operation: "create" | "update" | "delete";
   payload: any;
   timestamp: number;
@@ -44,17 +238,26 @@ export async function POST(request: NextRequest) {
 
   const results: { id: string; success: boolean; error?: string }[] = [];
 
+  // ✅ --- [THE FIX] ---
+  let client: PoolClient | undefined;
+
   try {
-    const { rows: userRows } = await pool.query(
+    // 1. Move connection inside the try block
+    client = await pool.connect();
+    // ✅ --- END OF FIX ---
+
+    const { rows: userRows } = await client.query(
       "SELECT tier FROM users WHERE id = $1",
       [userId]
     );
 
     if (userRows.length === 0) {
+      // client.release() will be handled in 'finally'
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const tier = userRows[0].tier;
+    await client.query("BEGIN");
 
     for (const op of operations) {
       try {
@@ -62,7 +265,7 @@ export async function POST(request: NextRequest) {
         let values: any[] = [];
 
         switch (op.entityType) {
-          // --- 'project' case (no changes) ---
+          // --- 'project' case
           case "project":
             if (op.operation === "create") {
               query = `
@@ -104,12 +307,11 @@ export async function POST(request: NextRequest) {
             }
             break;
 
-          // [UPDATED] 'task' case with reminder fields
+          // 'task' case
           case "task":
             if (op.operation === "create") {
-              // Free tier limit check (still works)
               if (tier === "free") {
-                const { rows } = await pool.query(
+                const { rows } = await client.query(
                   "SELECT COUNT(*) FROM tasks WHERE user_id = $1",
                   [userId]
                 );
@@ -124,7 +326,6 @@ export async function POST(request: NextRequest) {
                 }
               }
 
-              // [UPDATED] query with all new fields
               query = `
                 INSERT INTO tasks (
                   id, user_id, title, completed, created_at, updated_at,
@@ -137,7 +338,6 @@ export async function POST(request: NextRequest) {
                 )
                 ON CONFLICT (id) DO NOTHING
               `;
-              // [UPDATED] values array to match all fields
               values = [
                 op.payload.id,
                 userId,
@@ -153,14 +353,12 @@ export async function POST(request: NextRequest) {
                 op.payload.tags || [],
                 op.payload.recurringSchedule || "none",
                 op.payload.reminderAt || null,
-                // [NEW] Add reminder fields
                 op.payload.meetLink || null,
                 op.payload.reminder_30_sent || false,
                 op.payload.reminder_20_sent || false,
                 op.payload.reminder_10_sent || false,
               ];
             } else if (op.operation === "update") {
-              // [UPDATED] query with all new fields
               query = `
                 UPDATE tasks 
                 SET 
@@ -172,7 +370,6 @@ export async function POST(request: NextRequest) {
                   reminder_20_sent = $14, reminder_10_sent = $15
                 WHERE id = $16 AND user_id = $17
               `;
-              // [UPDATED] values array to match all fields
               values = [
                 op.payload.title,
                 op.payload.completed,
@@ -185,17 +382,14 @@ export async function POST(request: NextRequest) {
                 op.payload.tags || [],
                 op.payload.recurringSchedule || "none",
                 op.payload.reminderAt || null,
-                // [NEW] Add reminder fields
                 op.payload.meetLink || null,
                 op.payload.reminder_30_sent || false,
                 op.payload.reminder_20_sent || false,
                 op.payload.reminder_10_sent || false,
-                // WHERE clause
-                op.payload.id, // for WHERE id = $16
-                userId, // for WHERE user_id = $17
+                op.payload.id,
+                userId,
               ];
             } else if (op.operation === "delete") {
-              // Delete logic is unchanged
               query = `DELETE FROM tasks WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
             } else {
@@ -205,12 +399,11 @@ export async function POST(request: NextRequest) {
             }
             break;
 
-          // --- NO CHANGES to note or diary ---
+          // 'note' case
           case "note":
-            // (Your existing 'note' logic is perfect)
             if (op.operation === "create") {
               if (tier === "free") {
-                const { rows } = await pool.query(
+                const { rows } = await client.query(
                   "SELECT COUNT(*) FROM notes WHERE user_id = $1",
                   [userId]
                 );
@@ -224,7 +417,14 @@ export async function POST(request: NextRequest) {
                   continue;
                 }
               }
-              query = `INSERT INTO notes (id, user_id, title, content, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING`;
+              query = `
+                INSERT INTO notes (
+                  id, user_id, title, content, created_at, updated_at,
+                  folder_id, is_pinned, is_locked, is_quick_note, deleted_at,
+                  tags
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO NOTHING
+              `;
               values = [
                 op.payload.id,
                 userId,
@@ -232,13 +432,33 @@ export async function POST(request: NextRequest) {
                 op.payload.content,
                 op.payload.createdAt,
                 op.payload.updatedAt,
+                op.payload.folderId || null,
+                op.payload.isPinned || false,
+                op.payload.isLocked || false,
+                op.payload.isQuickNote || false,
+                op.payload.deletedAt || null,
+                op.payload.tags || [],
               ];
             } else if (op.operation === "update") {
-              query = `UPDATE notes SET title = $1, content = $2, updated_at = $3 WHERE id = $4 AND user_id = $5`;
+              query = `
+                UPDATE notes 
+                SET 
+                  title = $1, content = $2, updated_at = $3,
+                  folder_id = $4, is_pinned = $5, is_locked = $6,
+                  is_quick_note = $7, deleted_at = $8,
+                  tags = $9
+                WHERE id = $10 AND user_id = $11
+              `;
               values = [
                 op.payload.title,
                 op.payload.content,
                 op.payload.updatedAt,
+                op.payload.folderId || null,
+                op.payload.isPinned || false,
+                op.payload.isLocked || false,
+                op.payload.isQuickNote || false,
+                op.payload.deletedAt || null,
+                op.payload.tags || [],
                 op.payload.id,
                 userId,
               ];
@@ -252,8 +472,45 @@ export async function POST(request: NextRequest) {
             }
             break;
 
+          // 'folder' case
+          case "folder":
+            if (op.operation === "create") {
+              query = `
+                INSERT INTO folders (id, user_id, name, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (id) DO NOTHING
+              `;
+              values = [
+                op.payload.id,
+                userId,
+                op.payload.name,
+                op.payload.createdAt,
+                op.payload.updatedAt,
+              ];
+            } else if (op.operation === "update") {
+              query = `
+                UPDATE folders
+                SET name = $1, updated_at = $2
+                WHERE id = $3 AND user_id = $4
+              `;
+              values = [
+                op.payload.name,
+                op.payload.updatedAt,
+                op.payload.id,
+                userId,
+              ];
+            } else if (op.operation === "delete") {
+              query = `DELETE FROM folders WHERE id = $1 AND user_id = $2`;
+              values = [op.payload.id, userId];
+            } else {
+              throw new Error(
+                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
+              );
+            }
+            break;
+
+          // ✅ [UPDATED] 'diary' case
           case "diary":
-            // (Your existing 'diary' logic is perfect)
             if (tier === "free") {
               results.push({
                 id: op.id,
@@ -263,13 +520,45 @@ export async function POST(request: NextRequest) {
               continue;
             }
             if (op.operation === "create" || op.operation === "update") {
-              query = `INSERT INTO diary_entries (id, user_id, entry_date, content, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET content = $4, created_at = $5`;
+              query = `
+                INSERT INTO diary_entries (
+                  id, user_id, entry_date, content, created_at,
+                  mood, energy, weather, location, tags, is_locked, media
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO UPDATE SET 
+                  content = $4, 
+                  created_at = $5,
+                  mood = $6,
+                  energy = $7,
+                  weather = $8,
+                  location = $9,
+                  tags = $10,
+                  is_locked = $11,
+                  media = $12
+              `;
+
+              // Ensure JSON fields are stringified for TEXT columns
+              const weatherStr = op.payload.weather
+                ? JSON.stringify(op.payload.weather)
+                : null;
+              const mediaStr = op.payload.media
+                ? JSON.stringify(op.payload.media)
+                : null;
+
               values = [
                 op.payload.id,
                 userId,
                 op.payload.entryDate,
                 op.payload.content,
                 op.payload.createdAt,
+                // New Fields
+                op.payload.mood || null,
+                op.payload.energy || null,
+                weatherStr,
+                op.payload.location || null,
+                op.payload.tags || [],
+                op.payload.isLocked || false,
+                mediaStr,
               ];
             } else if (op.operation === "delete") {
               query = `DELETE FROM diary_entries WHERE id = $1 AND user_id = $2`;
@@ -281,12 +570,11 @@ export async function POST(request: NextRequest) {
             }
             break;
 
-          // --- NO CHANGES to pomodoro ---
+          // 'pomodoro' case
           case "pomodoro":
-            // (Your existing 'pomodoro' logic is perfect)
             if (op.operation === "create") {
               if (tier === "free") {
-                const { rows } = await pool.query(
+                const { rows } = await client.query(
                   `SELECT COUNT(*) FROM pomodoro_sessions WHERE user_id = $1 AND DATE_TRUNC('month', TO_TIMESTAMP(completed_at / 1000)) = DATE_TRUNC('month', NOW())`,
                   [userId]
                 );
@@ -319,11 +607,9 @@ export async function POST(request: NextRequest) {
             }
             break;
 
-          // [NEW] Add case for 'notification'
+          // 'notification' case
           case "notification":
             if (op.operation === "create") {
-              // Notifications are usually created by the server (cron job),
-              // but we can support client-side creation if needed.
               query = `
                 INSERT INTO notifications (id, user_id, message, link, read, created_at)
                 VALUES ($1, $2, $3, $4, $5, NOW())
@@ -337,7 +623,6 @@ export async function POST(request: NextRequest) {
                 op.payload.read || false,
               ];
             } else if (op.operation === "update") {
-              // Typically only updating the 'read' status
               query = `
                 UPDATE notifications 
                 SET read = $1
@@ -359,25 +644,41 @@ export async function POST(request: NextRequest) {
         }
 
         if (query) {
-          await pool.query(query, values);
+          await client.query(query, values);
         }
 
         results.push({ id: op.id, success: true });
       } catch (error: any) {
         console.error("Sync error for operation", op.id, error);
         results.push({ id: op.id, success: false, error: error.message });
+        throw new Error(`Operation ${op.id} failed: ${error.message}`);
       }
     }
 
+    await client.query("COMMIT");
+
     return NextResponse.json({ results });
   } catch (error: any) {
+    // ✅ [FIX] Rollback only if client exists
+    if (client) {
+      await client.query("ROLLBACK");
+    }
     console.error(
-      "A critical sync error occurred (likely a DB connection issue):",
+      "A critical sync error occurred, transaction rolled back:",
       error
     );
+
+    if (results.some((r) => !r.success)) {
+      return NextResponse.json({ results }, { status: 400 });
+    }
     return NextResponse.json(
       { error: "Sync failed. Check server logs." },
       { status: 500 }
     );
+  } finally {
+    // ✅ [FIX] Always release the client if it was connected
+    if (client) {
+      client.release();
+    }
   }
 }

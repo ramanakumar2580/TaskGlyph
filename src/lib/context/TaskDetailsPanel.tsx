@@ -39,7 +39,8 @@ type LocalTaskDetails = Pick<
   Task,
   "title" | "priority" | "dueDate" | "reminderAt"
 > & {
-  recurring: RecurringSchedule;
+  // ✅ FIX 2: Rename 'recurring' to 'recurringSchedule' to match the db
+  recurringSchedule: RecurringSchedule;
 };
 
 // --- Main Panel ---
@@ -79,7 +80,8 @@ export default function TaskDetailsPanel() {
         priority: selectedTask.priority,
         dueDate: selectedTask.dueDate,
         reminderAt: selectedTask.reminderAt,
-        recurring: (selectedTask as any).recurring || "none",
+        // ✅ FIX 2: Read from 'recurringSchedule'
+        recurringSchedule: selectedTask.recurringSchedule || "none",
       });
       setNotes(selectedTask.notes || "");
     } else {
@@ -110,7 +112,8 @@ export default function TaskDetailsPanel() {
     setLocalTask({ ...localTask, reminderAt: date ? date.getTime() : null });
 
   const handleSetRecurring = (option: RecurringOption) =>
-    setLocalTask({ ...localTask, recurring: option });
+    // ✅ FIX 2: Update 'recurringSchedule'
+    setLocalTask({ ...localTask, recurringSchedule: option });
 
   // --- SAVE Handlers (updates DB) ---
 
@@ -123,10 +126,13 @@ export default function TaskDetailsPanel() {
   const handleSaveDetails = async () => {
     if (!localTask) return;
     setIsSavingDetails(true);
+
+    // ✅ FIX 2: We can now spread localTask, as its shape matches the db
     await updateTask(selectedTask.id, {
       ...localTask,
       title: localTask.title.trim() || "Untitled Task",
     });
+
     setTimeout(() => setIsSavingDetails(false), 1000);
   };
 
@@ -136,7 +142,8 @@ export default function TaskDetailsPanel() {
       priority: selectedTask.priority,
       dueDate: selectedTask.dueDate,
       reminderAt: selectedTask.reminderAt,
-      recurring: (selectedTask as any).recurring || "none",
+      // ✅ FIX 2: Read from 'recurringSchedule'
+      recurringSchedule: selectedTask.recurringSchedule || "none",
     });
     setNotes(selectedTask.notes || "");
   };
@@ -171,8 +178,9 @@ export default function TaskDetailsPanel() {
     }
   };
 
+  // ✅ FIX 1: Wrap 'localTask.reminderAt' (which is a string) with Number()
   const reminderDate = localTask.reminderAt
-    ? new Date(localTask.reminderAt)
+    ? new Date(Number(localTask.reminderAt))
     : null;
 
   const recurringOptions: RecurringOption[] = [
@@ -181,14 +189,16 @@ export default function TaskDetailsPanel() {
     "weekly",
     "monthly",
   ];
-  const currentRecurring = localTask.recurring || "none";
+  // ✅ FIX 2: Read from 'recurringSchedule'
+  const currentRecurring = localTask.recurringSchedule || "none";
 
   const detailsChanged =
     localTask.title !== selectedTask.title ||
     localTask.priority !== selectedTask.priority ||
     localTask.dueDate !== selectedTask.dueDate ||
     localTask.reminderAt !== selectedTask.reminderAt ||
-    localTask.recurring !== ((selectedTask as any).recurring || "none");
+    // ✅ FIX 2: Compare 'recurringSchedule'
+    localTask.recurringSchedule !== (selectedTask.recurringSchedule || "none");
 
   const notesChanged = notes !== (selectedTask.notes || "");
 
@@ -408,8 +418,12 @@ export default function TaskDetailsPanel() {
                                           : "text-gray-500"
                                       }
                                     >
+                                      {/* ✅ FIX 1: Wrap 'localTask.dueDate' (string) with Number() */}
                                       {localTask.dueDate
-                                        ? format(localTask.dueDate, "MMM d")
+                                        ? format(
+                                            Number(localTask.dueDate),
+                                            "MMM d"
+                                          )
                                         : "Set date"}
                                     </span>
                                   </Popover.Button>
@@ -426,9 +440,12 @@ export default function TaskDetailsPanel() {
                                     <Popover.Panel className="absolute z-10 mt-3 right-0">
                                       <div className="bg-white p-3 shadow-lg rounded-lg ring-1 ring-black/5">
                                         <DatePicker
+                                          // ✅ FIX 1: Wrap 'localTask.dueDate' (string) with Number()
                                           selected={
                                             localTask.dueDate
-                                              ? new Date(localTask.dueDate)
+                                              ? new Date(
+                                                  Number(localTask.dueDate)
+                                                )
                                               : null
                                           }
                                           onChange={(date) => {
@@ -472,6 +489,7 @@ export default function TaskDetailsPanel() {
                                       : "text-gray-500"
                                   }
                                 >
+                                  {/* This line (476) is now fixed because 'reminderDate' is created correctly */}
                                   {reminderDate
                                     ? format(reminderDate, "MMM d, p")
                                     : "Add Reminder"}

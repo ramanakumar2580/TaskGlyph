@@ -300,6 +300,8 @@ __turbopack_async_result__();
 return __turbopack_context__.a(async (__turbopack_handle_async_dependencies__, __turbopack_async_result__) => { try {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */ __turbopack_context__.s([
+    "GET",
+    ()=>GET,
     "POST",
     ()=>POST
 ]);
@@ -316,6 +318,181 @@ var __turbopack_async_dependencies__ = __turbopack_handle_async_dependencies__([
 ;
 ;
 ;
+async function GET(request) {
+    const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2f$options$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["authOptions"]);
+    if (!session?.user?.id) {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+            error: "Unauthorized"
+        }, {
+            status: 401
+        });
+    }
+    const { searchParams } = new URL(request.url);
+    const since = searchParams.get("since") || "0";
+    const userId = session.user.id;
+    // ✅ --- [THE FIX] ---
+    let client;
+    try {
+        // 1. Move the connection *inside* the try block.
+        client = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].connect();
+        await client.query("BEGIN"); // Start a transaction
+        // ✅ --- END OF FIX ---
+        const syncTimestamp = Date.now();
+        const [userMetadataRes, projectsRes, tasksRes, notesRes, foldersRes, diaryEntriesRes, pomodoroSessionsRes, notificationsRes] = await Promise.all([
+            // 1. userMetadata
+            client.query(`
+          SELECT 
+            id as "userId", 
+            tier,
+            trial_started_at as "trialStartedAt",
+            (notes_password_hash IS NOT NULL) as "hasNotesPassword"
+          FROM users 
+          WHERE id = $1
+        `, [
+                userId
+            ]),
+            // 2. projects
+            client.query(`
+          SELECT 
+            id, name, description,
+            accent_color as "accentColor",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM projects 
+          WHERE user_id = $1 AND updated_at > $2
+        `, [
+                userId,
+                since
+            ]),
+            // 3. tasks
+            client.query(`
+          SELECT 
+            id, title, completed, notes, priority, tags, meet_link,
+            created_at as "createdAt",
+            updated_at as "updatedAt",
+            project_id as "projectId",
+            parent_id as "parentId",
+            due_date as "dueDate",
+            recurring_schedule as "recurringSchedule",
+            reminder_at as "reminderAt",
+            reminder_30_sent,
+            reminder_20_sent,
+            reminder_10_sent
+          FROM tasks 
+          WHERE user_id = $1 AND updated_at > $2
+        `, [
+                userId,
+                since
+            ]),
+            // 4. notes
+            client.query(`
+          SELECT 
+            id, title, content, tags,
+            created_at as "createdAt",
+            updated_at as "updatedAt",
+            folder_id as "folderId",
+            is_pinned as "isPinned",
+            is_locked as "isLocked",
+            is_quick_note as "isQuickNote",
+            deleted_at as "deletedAt"
+          FROM notes 
+          WHERE user_id = $1 AND updated_at > $2
+        `, [
+                userId,
+                since
+            ]),
+            // 5. folders
+            client.query(`
+          SELECT 
+            id, name,
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM folders 
+          WHERE user_id = $1 AND updated_at > $2
+        `, [
+                userId,
+                since
+            ]),
+            // 6. [UPDATED] diary_entries with New Fields
+            client.query(`
+          SELECT 
+            id, content,
+            entry_date as "entryDate",
+            created_at as "createdAt",
+            mood,
+            energy,
+            weather,
+            location,
+            tags,
+            is_locked as "isLocked",
+            media
+          FROM diary_entries 
+          WHERE user_id = $1 AND created_at > $2
+        `, [
+                userId,
+                since
+            ]),
+            // 7. pomodoro_sessions
+            client.query(`
+          SELECT 
+            id, type,
+            duration_minutes as "durationMinutes",
+            completed_at as "completedAt"
+          FROM pomodoro_sessions 
+          WHERE user_id = $1 AND completed_at > $2
+        `, [
+                userId,
+                since
+            ]),
+            // 8. notifications
+            client.query(`
+          SELECT 
+            id, message, link, read,
+            user_id as "userId",
+            (EXTRACT(EPOCH FROM created_at) * 1000) as "createdAt"
+          FROM notifications 
+          WHERE user_id = $1 AND (EXTRACT(EPOCH FROM created_at) * 1000) > $2
+        `, [
+                userId,
+                since
+            ])
+        ]);
+        await client.query("COMMIT"); // Commit the transaction
+        // Return all data in a single JSON object
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+            timestamp: syncTimestamp,
+            userMetadata: userMetadataRes.rows,
+            projects: projectsRes.rows,
+            tasks: tasksRes.rows,
+            notes: notesRes.rows,
+            folders: foldersRes.rows,
+            // [UPDATED] Parse JSON strings for Weather and Media before sending to client
+            diaryEntries: diaryEntriesRes.rows.map((row)=>({
+                    ...row,
+                    weather: row.weather ? JSON.parse(row.weather) : null,
+                    media: row.media ? JSON.parse(row.media) : []
+                })),
+            pomodoroSessions: pomodoroSessionsRes.rows,
+            notifications: notificationsRes.rows
+        });
+    } catch (error) {
+        // ✅ [FIX] Rollback only if client exists
+        if (client) {
+            await client.query("ROLLBACK"); // Roll back on error
+        }
+        console.error("Failed to fetch all data for user:", userId, error);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+            error: "Failed to fetch data: " + error.message
+        }, {
+            status: 500
+        });
+    } finally{
+        // ✅ [FIX] Always release the client if it was connected
+        if (client) {
+            client.release();
+        }
+    }
+}
 async function POST(request) {
     const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2d$auth$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2f$options$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["authOptions"]);
     if (!session?.user?.id) {
@@ -341,11 +518,17 @@ async function POST(request) {
         });
     }
     const results = [];
+    // ✅ --- [THE FIX] ---
+    let client;
     try {
-        const { rows: userRows } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].query("SELECT tier FROM users WHERE id = $1", [
+        // 1. Move connection inside the try block
+        client = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].connect();
+        // ✅ --- END OF FIX ---
+        const { rows: userRows } = await client.query("SELECT tier FROM users WHERE id = $1", [
             userId
         ]);
         if (userRows.length === 0) {
+            // client.release() will be handled in 'finally'
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
                 error: "User not found"
             }, {
@@ -353,12 +536,13 @@ async function POST(request) {
             });
         }
         const tier = userRows[0].tier;
+        await client.query("BEGIN");
         for (const op of operations){
             try {
                 let query = "";
                 let values = [];
                 switch(op.entityType){
-                    // --- 'project' case (no changes) ---
+                    // --- 'project' case
                     case "project":
                         if (op.operation === "create") {
                             query = `
@@ -400,12 +584,11 @@ async function POST(request) {
                             throw new Error(`Unsupported operation "${op.operation}" for entity "${op.entityType}"`);
                         }
                         break;
-                    // [UPDATED] 'task' case with reminder fields
+                    // 'task' case
                     case "task":
                         if (op.operation === "create") {
-                            // Free tier limit check (still works)
                             if (tier === "free") {
-                                const { rows } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].query("SELECT COUNT(*) FROM tasks WHERE user_id = $1", [
+                                const { rows } = await client.query("SELECT COUNT(*) FROM tasks WHERE user_id = $1", [
                                     userId
                                 ]);
                                 const count = parseInt(rows[0].count);
@@ -418,7 +601,6 @@ async function POST(request) {
                                     continue;
                                 }
                             }
-                            // [UPDATED] query with all new fields
                             query = `
                 INSERT INTO tasks (
                   id, user_id, title, completed, created_at, updated_at,
@@ -431,7 +613,6 @@ async function POST(request) {
                 )
                 ON CONFLICT (id) DO NOTHING
               `;
-                            // [UPDATED] values array to match all fields
                             values = [
                                 op.payload.id,
                                 userId,
@@ -447,14 +628,12 @@ async function POST(request) {
                                 op.payload.tags || [],
                                 op.payload.recurringSchedule || "none",
                                 op.payload.reminderAt || null,
-                                // [NEW] Add reminder fields
                                 op.payload.meetLink || null,
                                 op.payload.reminder_30_sent || false,
                                 op.payload.reminder_20_sent || false,
                                 op.payload.reminder_10_sent || false
                             ];
                         } else if (op.operation === "update") {
-                            // [UPDATED] query with all new fields
                             query = `
                 UPDATE tasks 
                 SET 
@@ -466,7 +645,6 @@ async function POST(request) {
                   reminder_20_sent = $14, reminder_10_sent = $15
                 WHERE id = $16 AND user_id = $17
               `;
-                            // [UPDATED] values array to match all fields
                             values = [
                                 op.payload.title,
                                 op.payload.completed,
@@ -479,17 +657,14 @@ async function POST(request) {
                                 op.payload.tags || [],
                                 op.payload.recurringSchedule || "none",
                                 op.payload.reminderAt || null,
-                                // [NEW] Add reminder fields
                                 op.payload.meetLink || null,
                                 op.payload.reminder_30_sent || false,
                                 op.payload.reminder_20_sent || false,
                                 op.payload.reminder_10_sent || false,
-                                // WHERE clause
                                 op.payload.id,
                                 userId
                             ];
                         } else if (op.operation === "delete") {
-                            // Delete logic is unchanged
                             query = `DELETE FROM tasks WHERE id = $1 AND user_id = $2`;
                             values = [
                                 op.payload.id,
@@ -499,12 +674,11 @@ async function POST(request) {
                             throw new Error(`Unsupported operation "${op.operation}" for entity "${op.entityType}"`);
                         }
                         break;
-                    // --- NO CHANGES to note or diary ---
+                    // 'note' case
                     case "note":
-                        // (Your existing 'note' logic is perfect)
                         if (op.operation === "create") {
                             if (tier === "free") {
-                                const { rows } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].query("SELECT COUNT(*) FROM notes WHERE user_id = $1", [
+                                const { rows } = await client.query("SELECT COUNT(*) FROM notes WHERE user_id = $1", [
                                     userId
                                 ]);
                                 const count = parseInt(rows[0].count);
@@ -517,21 +691,48 @@ async function POST(request) {
                                     continue;
                                 }
                             }
-                            query = `INSERT INTO notes (id, user_id, title, content, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING`;
+                            query = `
+                INSERT INTO notes (
+                  id, user_id, title, content, created_at, updated_at,
+                  folder_id, is_pinned, is_locked, is_quick_note, deleted_at,
+                  tags
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO NOTHING
+              `;
                             values = [
                                 op.payload.id,
                                 userId,
                                 op.payload.title,
                                 op.payload.content,
                                 op.payload.createdAt,
-                                op.payload.updatedAt
+                                op.payload.updatedAt,
+                                op.payload.folderId || null,
+                                op.payload.isPinned || false,
+                                op.payload.isLocked || false,
+                                op.payload.isQuickNote || false,
+                                op.payload.deletedAt || null,
+                                op.payload.tags || []
                             ];
                         } else if (op.operation === "update") {
-                            query = `UPDATE notes SET title = $1, content = $2, updated_at = $3 WHERE id = $4 AND user_id = $5`;
+                            query = `
+                UPDATE notes 
+                SET 
+                  title = $1, content = $2, updated_at = $3,
+                  folder_id = $4, is_pinned = $5, is_locked = $6,
+                  is_quick_note = $7, deleted_at = $8,
+                  tags = $9
+                WHERE id = $10 AND user_id = $11
+              `;
                             values = [
                                 op.payload.title,
                                 op.payload.content,
                                 op.payload.updatedAt,
+                                op.payload.folderId || null,
+                                op.payload.isPinned || false,
+                                op.payload.isLocked || false,
+                                op.payload.isQuickNote || false,
+                                op.payload.deletedAt || null,
+                                op.payload.tags || [],
                                 op.payload.id,
                                 userId
                             ];
@@ -545,8 +746,45 @@ async function POST(request) {
                             throw new Error(`Unsupported operation "${op.operation}" for entity "${op.entityType}"`);
                         }
                         break;
+                    // 'folder' case
+                    case "folder":
+                        if (op.operation === "create") {
+                            query = `
+                INSERT INTO folders (id, user_id, name, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (id) DO NOTHING
+              `;
+                            values = [
+                                op.payload.id,
+                                userId,
+                                op.payload.name,
+                                op.payload.createdAt,
+                                op.payload.updatedAt
+                            ];
+                        } else if (op.operation === "update") {
+                            query = `
+                UPDATE folders
+                SET name = $1, updated_at = $2
+                WHERE id = $3 AND user_id = $4
+              `;
+                            values = [
+                                op.payload.name,
+                                op.payload.updatedAt,
+                                op.payload.id,
+                                userId
+                            ];
+                        } else if (op.operation === "delete") {
+                            query = `DELETE FROM folders WHERE id = $1 AND user_id = $2`;
+                            values = [
+                                op.payload.id,
+                                userId
+                            ];
+                        } else {
+                            throw new Error(`Unsupported operation "${op.operation}" for entity "${op.entityType}"`);
+                        }
+                        break;
+                    // ✅ [UPDATED] 'diary' case
                     case "diary":
-                        // (Your existing 'diary' logic is perfect)
                         if (tier === "free") {
                             results.push({
                                 id: op.id,
@@ -556,13 +794,39 @@ async function POST(request) {
                             continue;
                         }
                         if (op.operation === "create" || op.operation === "update") {
-                            query = `INSERT INTO diary_entries (id, user_id, entry_date, content, created_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET content = $4, created_at = $5`;
+                            query = `
+                INSERT INTO diary_entries (
+                  id, user_id, entry_date, content, created_at,
+                  mood, energy, weather, location, tags, is_locked, media
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO UPDATE SET 
+                  content = $4, 
+                  created_at = $5,
+                  mood = $6,
+                  energy = $7,
+                  weather = $8,
+                  location = $9,
+                  tags = $10,
+                  is_locked = $11,
+                  media = $12
+              `;
+                            // Ensure JSON fields are stringified for TEXT columns
+                            const weatherStr = op.payload.weather ? JSON.stringify(op.payload.weather) : null;
+                            const mediaStr = op.payload.media ? JSON.stringify(op.payload.media) : null;
                             values = [
                                 op.payload.id,
                                 userId,
                                 op.payload.entryDate,
                                 op.payload.content,
-                                op.payload.createdAt
+                                op.payload.createdAt,
+                                // New Fields
+                                op.payload.mood || null,
+                                op.payload.energy || null,
+                                weatherStr,
+                                op.payload.location || null,
+                                op.payload.tags || [],
+                                op.payload.isLocked || false,
+                                mediaStr
                             ];
                         } else if (op.operation === "delete") {
                             query = `DELETE FROM diary_entries WHERE id = $1 AND user_id = $2`;
@@ -574,12 +838,11 @@ async function POST(request) {
                             throw new Error(`Unsupported operation "${op.operation}" for entity "${op.entityType}"`);
                         }
                         break;
-                    // --- NO CHANGES to pomodoro ---
+                    // 'pomodoro' case
                     case "pomodoro":
-                        // (Your existing 'pomodoro' logic is perfect)
                         if (op.operation === "create") {
                             if (tier === "free") {
-                                const { rows } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].query(`SELECT COUNT(*) FROM pomodoro_sessions WHERE user_id = $1 AND DATE_TRUNC('month', TO_TIMESTAMP(completed_at / 1000)) = DATE_TRUNC('month', NOW())`, [
+                                const { rows } = await client.query(`SELECT COUNT(*) FROM pomodoro_sessions WHERE user_id = $1 AND DATE_TRUNC('month', TO_TIMESTAMP(completed_at / 1000)) = DATE_TRUNC('month', NOW())`, [
                                     userId
                                 ]);
                                 const count = parseInt(rows[0].count);
@@ -606,11 +869,9 @@ async function POST(request) {
                             throw new Error(`Unsupported operation "${op.operation}" for entity "${op.entityType}"`);
                         }
                         break;
-                    // [NEW] Add case for 'notification'
+                    // 'notification' case
                     case "notification":
                         if (op.operation === "create") {
-                            // Notifications are usually created by the server (cron job),
-                            // but we can support client-side creation if needed.
                             query = `
                 INSERT INTO notifications (id, user_id, message, link, read, created_at)
                 VALUES ($1, $2, $3, $4, $5, NOW())
@@ -624,7 +885,6 @@ async function POST(request) {
                                 op.payload.read || false
                             ];
                         } else if (op.operation === "update") {
-                            // Typically only updating the 'read' status
                             query = `
                 UPDATE notifications 
                 SET read = $1
@@ -649,7 +909,7 @@ async function POST(request) {
                         throw new Error(`Unsupported entity type: ${op.entityType}`);
                 }
                 if (query) {
-                    await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].query(query, values);
+                    await client.query(query, values);
                 }
                 results.push({
                     id: op.id,
@@ -662,18 +922,36 @@ async function POST(request) {
                     success: false,
                     error: error.message
                 });
+                throw new Error(`Operation ${op.id} failed: ${error.message}`);
             }
         }
+        await client.query("COMMIT");
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             results
         });
     } catch (error) {
-        console.error("A critical sync error occurred (likely a DB connection issue):", error);
+        // ✅ [FIX] Rollback only if client exists
+        if (client) {
+            await client.query("ROLLBACK");
+        }
+        console.error("A critical sync error occurred, transaction rolled back:", error);
+        if (results.some((r)=>!r.success)) {
+            return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                results
+            }, {
+                status: 400
+            });
+        }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             error: "Sync failed. Check server logs."
         }, {
             status: 500
         });
+    } finally{
+        // ✅ [FIX] Always release the client if it was connected
+        if (client) {
+            client.release();
+        }
     }
 }
 __turbopack_async_result__();

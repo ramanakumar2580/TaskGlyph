@@ -1,51 +1,38 @@
 @import "tailwindcss";
+@import "tippy.js/dist/tippy.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* react-datepicker base tweaks */
+/* react-datepicker base tweaks (unchanged) */
 .react-datepicker {
   font-family: inherit !important;
   background: transparent !important;
 }
-
-/* Container style */
 .react-datepicker__month-container {
   background-color: transparent !important;
   padding: 0.5rem;
 }
-
-/* Days: default (current month) */
 .react-datepicker__day {
-  color: #111827 !important; /* dark */
+  color: #111827 !important;
 }
-
-/* Days from other months */
 .react-datepicker__day--outside-month {
-  color: #9ca3af !important; /* light gray */
+  color: #9ca3af !important;
   opacity: 0.95;
 }
-
-/* Selected day */
 .react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
   background-color: #2563eb !important;
   color: #fff !important;
   border-radius: 9999px !important;
 }
-
-/* Header */
 .react-datepicker__header {
   background: transparent !important;
   border-bottom: none !important;
 }
-
-/* Current month text (header) */
 .react-datepicker__current-month {
   color: #111827 !important;
 }
-
-/* Dark mode overrides */
 .dark .react-datepicker__day {
   color: #e5e7eb !important;
 }
@@ -54,4 +41,135 @@
 }
 .dark .react-datepicker__current-month {
   color: #f9fafb !important;
+}
+
+/*
+ * [UPDATED] Tiptap Editor Fixes
+*/
+
+/* * [FIX for Feature #5] 
+ * This is the final robust fix for checklist alignment.
+*/
+.tiptap-styles ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.tiptap-styles ul[data-type="taskList"] li {
+  display: flex;
+  /* Use align-items-center to vertically center the checkbox */
+  align-items: center;
+  margin-top: 0.25em;
+}
+.tiptap-styles ul[data-type="taskList"] li > label {
+  margin-right: 0.5rem;
+  cursor: pointer;
+  /* Remove padding-top, as align-items:center handles it */
+}
+.tiptap-styles ul[data-type="taskList"] li > div {
+  flex-grow: 1;
+}
+/* This is the most important part:
+  It ensures the <p> tag inside the <li> behaves correctly
+  and doesn't have its own margins, fixing the deletion bug.
+*/
+.tiptap-styles ul[data-type="taskList"] li p {
+  margin: 0; /* Remove default paragraph margins */
+}
+
+/* 2. Fix for normal bullet/ordered lists (unchanged) */
+.tiptap-styles ul:not([data-type="taskList"]) {
+  list-style: disc;
+  padding-left: 2rem;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.tiptap-styles ol {
+  list-style: decimal;
+  padding-left: 2rem;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* 3. Fix for Heading Sizes (unchanged) */
+.tiptap-styles h1 {
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+.tiptap-styles h2 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+.tiptap-styles h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+/* 4. Basic paragraph styling (unchanged) */
+.tiptap-styles p {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Media Fixes (unchanged) */
+.tiptap-styles img,
+.tiptap-styles video {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 400px;
+  border-radius: 8px;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  border: 1px solid #e0e0e0;
+}
+
+/* Audio Player (unchanged) */
+.tiptap-styles .audio-player {
+  display: block;
+  margin: 1em auto;
+  max-width: 400px;
+}
+.tiptap-styles .audio-player audio {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #f7f7f7;
+}
+
+/* Links (unchanged) */
+.tiptap-styles a {
+  color: #007aff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Search Result (unchanged) */
+.search-result {
+  background-color: yellow;
+  border-radius: 2px;
+}
+
+/* * [FIX for Feature #4 & #8] 
+ * This is the new, stronger glass effect.
+*/
+.glass-morphism {
+  /* More opaque background */
+  background-color: rgba(255, 255, 255, 0.85);
+  /* Stronger blur */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  /* Fallback for old browsers */
+  @supports not (backdrop-filter: blur(16px)) {
+    background-color: rgba(255, 255, 255, 0.98);
+  }
+  /* Softer border */
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }

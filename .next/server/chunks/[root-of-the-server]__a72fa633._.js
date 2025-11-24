@@ -299,7 +299,6 @@ module.exports = mod;
 
 return __turbopack_context__.a(async (__turbopack_handle_async_dependencies__, __turbopack_async_result__) => { try {
 
-// src/app/api/user/tier/route.ts
 __turbopack_context__.s([
     "GET",
     ()=>GET
@@ -327,11 +326,17 @@ async function GET() {
         });
     }
     const userId = session.user.id;
+    // --- [THE FIX] ---
+    let client;
     try {
-        // Query the database for the user's tier
-        const { rows } = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].query("SELECT tier, trial_started_at FROM users WHERE id = $1", [
+        // 1. Move the connection *inside* the try block
+        // This will now catch the 'ENOTFOUND' error when offline
+        client = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].connect();
+        // 2. Query the database
+        const { rows } = await client.query("SELECT tier FROM users WHERE id = $1", [
             userId
         ]);
+        // --- END OF FIX ---
         if (rows.length === 0) {
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
                 error: "User not found"
@@ -342,18 +347,25 @@ async function GET() {
         const user = rows[0];
         // Return the user's tier
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            tier: user.tier,
-            trial_started_at: user.trial_started_at
+            tier: user.tier
         }, {
             status: 200
         });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error) {
-        console.error("❌ Error fetching user tier:", error);
+        // This block will now safely catch the offline error
+        console.error("❌ Error fetching user tier:", error.message);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             error: "Internal Server Error"
         }, {
             status: 500
-        });
+        } // Stops the crash
+        );
+    } finally{
+        // 3. Always release the client if it was successfully connected
+        if (client) {
+            client.release();
+        }
     }
 }
 __turbopack_async_result__();

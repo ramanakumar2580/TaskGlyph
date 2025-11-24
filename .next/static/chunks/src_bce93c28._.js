@@ -25,35 +25,43 @@ function useTier() {
             // 1. Define an async function to fetch and set tier
             const getAndSetTier = {
                 "useTier.useEffect.getAndSetTier": async (userId)=>{
-                    // 2. Try getting from local DB first for speed
+                    // 2. Try getting from local DB first for speed and offline support
                     const localMeta = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$clientDb$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].userMetadata.get(userId);
                     if (localMeta) {
                         setTier(localMeta.tier);
+                    } else {
+                        // If nothing is in local, set to 'free' as a default
+                        setTier("free");
                     }
-                    // 3. Fetch from server to get the *latest* tier info
-                    // We need to create this API route next
-                    try {
-                        const response = await fetch("/api/user/tier");
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.tier) {
-                                // 4. Save the latest info to local DB and update state
-                                await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$clientDb$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].userMetadata.put({
-                                    userId: userId,
-                                    tier: data.tier,
-                                    trialStartedAt: data.trialStartedAt || 0
-                                });
-                                setTier(data.tier);
+                    // 3. --- THIS IS THE FIX ---
+                    // Only try to fetch from the server if we are ONLINE
+                    if (navigator.onLine) {
+                        try {
+                            const response = await fetch("/api/user/tier");
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.tier) {
+                                    // 4. Save the latest info to local DB and update state
+                                    await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$clientDb$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].userMetadata.put({
+                                        userId: userId,
+                                        tier: data.tier,
+                                        trialStartedAt: data.trialStartedAt || 0
+                                    });
+                                    // Only update state if it's different from local
+                                    if (!localMeta || localMeta.tier !== data.tier) {
+                                        setTier(data.tier);
+                                    }
+                                }
+                            } else {
+                                // If fetch fails, we've already set from local, so we're good.
+                                console.error("Server responded with an error for /api/user/tier");
                             }
-                        } else {
-                            // If fetch fails, fall back to local or 'free'
-                            if (!localMeta) setTier("free");
+                        } catch (error) {
+                            console.error("Failed to fetch user tier:", error);
+                        // If fetch fails, we're still safe because we already set from localMeta
                         }
-                    } catch (error) {
-                        console.error("Failed to fetch user tier:", error);
-                        // If fetch fails, fall back to local or 'free'
-                        if (!localMeta) setTier("free");
                     }
+                // If we are OFFLINE, we skip the fetch entirely and just use localMeta
                 }
             }["useTier.useEffect.getAndSetTier"];
             if (status === "authenticated" && (session === null || session === void 0 ? void 0 : (_session_user = session.user) === null || _session_user === void 0 ? void 0 : _session_user.id)) {
@@ -147,8 +155,6 @@ function NotificationBell() {
         await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$clientDb$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].notifications.update(id, {
             read: true
         });
-    // Note: We don't need to trigger sync for this,
-    // it's a client-only "read" status.
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$popover$2f$popover$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Popover"], {
         className: "relative",
@@ -161,7 +167,7 @@ function NotificationBell() {
                         children: "View notifications"
                     }, void 0, false, {
                         fileName: "[project]/src/components/NotificationBell.tsx",
-                        lineNumber: 23,
+                        lineNumber: 21,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$heroicons$2f$react$2f$24$2f$outline$2f$esm$2f$BellIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__BellIcon$3e$__["BellIcon"], {
@@ -169,20 +175,20 @@ function NotificationBell() {
                         "aria-hidden": "true"
                     }, void 0, false, {
                         fileName: "[project]/src/components/NotificationBell.tsx",
-                        lineNumber: 24,
+                        lineNumber: 22,
                         columnNumber: 9
                     }, this),
                     unreadCount > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                         className: "absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"
                     }, void 0, false, {
                         fileName: "[project]/src/components/NotificationBell.tsx",
-                        lineNumber: 27,
+                        lineNumber: 25,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/NotificationBell.tsx",
-                lineNumber: 22,
+                lineNumber: 20,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$transition$2f$transition$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Transition"], {
@@ -205,7 +211,7 @@ function NotificationBell() {
                                     children: "Notifications"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/NotificationBell.tsx",
-                                    lineNumber: 42,
+                                    lineNumber: 40,
                                     columnNumber: 15
                                 }, this),
                                 unreadCount === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -213,7 +219,7 @@ function NotificationBell() {
                                     children: "You're all caught up!"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/NotificationBell.tsx",
-                                    lineNumber: 46,
+                                    lineNumber: 44,
                                     columnNumber: 17
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
                                     className: "max-h-60 overflow-y-auto space-y-2",
@@ -228,7 +234,7 @@ function NotificationBell() {
                                                             children: notif.message
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/NotificationBell.tsx",
-                                                            lineNumber: 57,
+                                                            lineNumber: 55,
                                                             columnNumber: 25
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -236,13 +242,13 @@ function NotificationBell() {
                                                             children: new Date(notif.createdAt).toLocaleTimeString()
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/NotificationBell.tsx",
-                                                            lineNumber: 58,
+                                                            lineNumber: 56,
                                                             columnNumber: 25
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/components/NotificationBell.tsx",
-                                                    lineNumber: 56,
+                                                    lineNumber: 54,
                                                     columnNumber: 23
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -252,50 +258,50 @@ function NotificationBell() {
                                                         className: "w-4 h-4 text-gray-400 hover:text-gray-700"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/NotificationBell.tsx",
-                                                        lineNumber: 66,
+                                                        lineNumber: 64,
                                                         columnNumber: 25
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/NotificationBell.tsx",
-                                                    lineNumber: 62,
+                                                    lineNumber: 60,
                                                     columnNumber: 23
                                                 }, this)
                                             ]
                                         }, notif.id, true, {
                                             fileName: "[project]/src/components/NotificationBell.tsx",
-                                            lineNumber: 52,
+                                            lineNumber: 50,
                                             columnNumber: 21
                                         }, this))
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/NotificationBell.tsx",
-                                    lineNumber: 50,
+                                    lineNumber: 48,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/NotificationBell.tsx",
-                            lineNumber: 41,
+                            lineNumber: 39,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/NotificationBell.tsx",
-                        lineNumber: 40,
+                        lineNumber: 38,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/NotificationBell.tsx",
-                    lineNumber: 39,
+                    lineNumber: 37,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/NotificationBell.tsx",
-                lineNumber: 30,
+                lineNumber: 28,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/NotificationBell.tsx",
-        lineNumber: 21,
+        lineNumber: 19,
         columnNumber: 5
     }, this);
 }
@@ -1422,7 +1428,8 @@ function TaskDetailsPanel() {
                     priority: selectedTask.priority,
                     dueDate: selectedTask.dueDate,
                     reminderAt: selectedTask.reminderAt,
-                    recurring: selectedTask.recurring || "none"
+                    // ✅ FIX 2: Read from 'recurringSchedule'
+                    recurringSchedule: selectedTask.recurringSchedule || "none"
                 });
                 setNotes(selectedTask.notes || "");
             } else {
@@ -1462,9 +1469,10 @@ function TaskDetailsPanel() {
             ...localTask,
             reminderAt: date ? date.getTime() : null
         });
-    const handleSetRecurring = (option)=>setLocalTask({
+    const handleSetRecurring = (option)=>// ✅ FIX 2: Update 'recurringSchedule'
+        setLocalTask({
             ...localTask,
-            recurring: option
+            recurringSchedule: option
         });
     // --- SAVE Handlers (updates DB) ---
     const handleSaveNotes = async ()=>{
@@ -1477,6 +1485,7 @@ function TaskDetailsPanel() {
     const handleSaveDetails = async ()=>{
         if (!localTask) return;
         setIsSavingDetails(true);
+        // ✅ FIX 2: We can now spread localTask, as its shape matches the db
         await updateTask(selectedTask.id, {
             ...localTask,
             title: localTask.title.trim() || "Untitled Task"
@@ -1489,7 +1498,8 @@ function TaskDetailsPanel() {
             priority: selectedTask.priority,
             dueDate: selectedTask.dueDate,
             reminderAt: selectedTask.reminderAt,
-            recurring: selectedTask.recurring || "none"
+            // ✅ FIX 2: Read from 'recurringSchedule'
+            recurringSchedule: selectedTask.recurringSchedule || "none"
         });
         setNotes(selectedTask.notes || "");
     };
@@ -1522,15 +1532,18 @@ function TaskDetailsPanel() {
             handleClose();
         }
     };
-    const reminderDate = localTask.reminderAt ? new Date(localTask.reminderAt) : null;
+    // ✅ FIX 1: Wrap 'localTask.reminderAt' (which is a string) with Number()
+    const reminderDate = localTask.reminderAt ? new Date(Number(localTask.reminderAt)) : null;
     const recurringOptions = [
         "none",
         "daily",
         "weekly",
         "monthly"
     ];
-    const currentRecurring = localTask.recurring || "none";
-    const detailsChanged = localTask.title !== selectedTask.title || localTask.priority !== selectedTask.priority || localTask.dueDate !== selectedTask.dueDate || localTask.reminderAt !== selectedTask.reminderAt || localTask.recurring !== (selectedTask.recurring || "none");
+    // ✅ FIX 2: Read from 'recurringSchedule'
+    const currentRecurring = localTask.recurringSchedule || "none";
+    const detailsChanged = localTask.title !== selectedTask.title || localTask.priority !== selectedTask.priority || localTask.dueDate !== selectedTask.dueDate || localTask.reminderAt !== selectedTask.reminderAt || // ✅ FIX 2: Compare 'recurringSchedule'
+    localTask.recurringSchedule !== (selectedTask.recurringSchedule || "none");
     const notesChanged = notes !== (selectedTask.notes || "");
     // --- Helper for styling Popover buttons ---
     const PopoverButton = (param)=>{
@@ -1543,7 +1556,7 @@ function TaskDetailsPanel() {
                     children: label
                 }, void 0, false, {
                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                    lineNumber: 208,
+                    lineNumber: 218,
                     columnNumber: 7
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1554,7 +1567,7 @@ function TaskDetailsPanel() {
                             className: "w-4 h-4 ".concat(value ? "text-gray-700" : "text-gray-400")
                         }, void 0, false, {
                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                            lineNumber: 213,
+                            lineNumber: 223,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1562,19 +1575,19 @@ function TaskDetailsPanel() {
                             children: value || "Set ".concat(label)
                         }, void 0, false, {
                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                            lineNumber: 216,
+                            lineNumber: 226,
                             columnNumber: 9
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                    lineNumber: 209,
+                    lineNumber: 219,
                     columnNumber: 7
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-            lineNumber: 207,
+            lineNumber: 217,
             columnNumber: 5
         }, this);
     };
@@ -1598,12 +1611,12 @@ function TaskDetailsPanel() {
                         className: "fixed inset-0 bg-black/30"
                     }, void 0, false, {
                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                        lineNumber: 236,
+                        lineNumber: 246,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                    lineNumber: 227,
+                    lineNumber: 237,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1645,18 +1658,18 @@ function TaskDetailsPanel() {
                                                             className: "w-5 h-5"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                            lineNumber: 270,
+                                                            lineNumber: 280,
                                                             columnNumber: 27
                                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$heroicons$2f$react$2f$24$2f$outline$2f$esm$2f$ChevronLeftIcon$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronLeftIcon$3e$__["ChevronLeftIcon"], {
                                                             className: "w-5 h-5"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                            lineNumber: 272,
+                                                            lineNumber: 282,
                                                             columnNumber: 27
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 264,
+                                                        lineNumber: 274,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1667,18 +1680,18 @@ function TaskDetailsPanel() {
                                                             className: "h-5 w-5"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                            lineNumber: 280,
+                                                            lineNumber: 290,
                                                             columnNumber: 25
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 275,
+                                                        lineNumber: 285,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                lineNumber: 263,
+                                                lineNumber: 273,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1695,19 +1708,19 @@ function TaskDetailsPanel() {
                                                             placeholder: "Task Title"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                            lineNumber: 288,
+                                                            lineNumber: 298,
                                                             columnNumber: 25
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 287,
+                                                        lineNumber: 297,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                                                         className: "border-gray-100"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 298,
+                                                        lineNumber: 308,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1723,7 +1736,7 @@ function TaskDetailsPanel() {
                                                                         onClick: cyclePriority
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 308,
+                                                                        lineNumber: 318,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1734,7 +1747,7 @@ function TaskDetailsPanel() {
                                                                                 children: "Recurring"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 317,
+                                                                                lineNumber: 327,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$popover$2f$popover$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Popover"], {
@@ -1750,7 +1763,7 @@ function TaskDetailsPanel() {
                                                                                                         className: "w-4 h-4 ".concat(currentRecurring !== "none" ? "text-gray-700" : "text-gray-400")
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                        lineNumber: 324,
+                                                                                                        lineNumber: 334,
                                                                                                         columnNumber: 37
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1758,13 +1771,13 @@ function TaskDetailsPanel() {
                                                                                                         children: currentRecurring === "none" ? "Set Recurring" : currentRecurring
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                        lineNumber: 331,
+                                                                                                        lineNumber: 341,
                                                                                                         columnNumber: 37
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 323,
+                                                                                                lineNumber: 333,
                                                                                                 columnNumber: 35
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$transition$2f$transition$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Transition"], {
@@ -1793,33 +1806,33 @@ function TaskDetailsPanel() {
                                                                                                                             className: "w-4 h-4"
                                                                                                                         }, void 0, false, {
                                                                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                                            lineNumber: 373,
+                                                                                                                            lineNumber: 383,
                                                                                                                             columnNumber: 49
                                                                                                                         }, this)
                                                                                                                     ]
                                                                                                                 }, option, true, {
                                                                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                                    lineNumber: 357,
+                                                                                                                    lineNumber: 367,
                                                                                                                     columnNumber: 45
                                                                                                                 }, this))
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                            lineNumber: 355,
+                                                                                                            lineNumber: 365,
                                                                                                             columnNumber: 41
                                                                                                         }, this)
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                        lineNumber: 354,
+                                                                                                        lineNumber: 364,
                                                                                                         columnNumber: 39
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                    lineNumber: 353,
+                                                                                                    lineNumber: 363,
                                                                                                     columnNumber: 37
                                                                                                 }, this)
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 344,
+                                                                                                lineNumber: 354,
                                                                                                 columnNumber: 35
                                                                                             }, this)
                                                                                         ]
@@ -1827,19 +1840,19 @@ function TaskDetailsPanel() {
                                                                                 }
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 320,
+                                                                                lineNumber: 330,
                                                                                 columnNumber: 29
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 316,
+                                                                        lineNumber: 326,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 307,
+                                                                lineNumber: 317,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1853,7 +1866,7 @@ function TaskDetailsPanel() {
                                                                                 children: "Due Date"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 390,
+                                                                                lineNumber: 400,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$popover$2f$popover$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Popover"], {
@@ -1869,21 +1882,21 @@ function TaskDetailsPanel() {
                                                                                                         className: "w-4 h-4 ".concat(localTask.dueDate ? "text-gray-700" : "text-gray-400")
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                        lineNumber: 397,
+                                                                                                        lineNumber: 407,
                                                                                                         columnNumber: 37
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                                         className: localTask.dueDate ? "text-gray-900" : "text-gray-500",
-                                                                                                        children: localTask.dueDate ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(localTask.dueDate, "MMM d") : "Set date"
+                                                                                                        children: localTask.dueDate ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(Number(localTask.dueDate), "MMM d") : "Set date"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                        lineNumber: 404,
+                                                                                                        lineNumber: 414,
                                                                                                         columnNumber: 37
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 396,
+                                                                                                lineNumber: 406,
                                                                                                 columnNumber: 35
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$transition$2f$transition$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Transition"], {
@@ -1899,7 +1912,8 @@ function TaskDetailsPanel() {
                                                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                                                         className: "bg-white p-3 shadow-lg rounded-lg ring-1 ring-black/5",
                                                                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$datepicker$2f$dist$2f$index$2e$es$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                                                                                                            selected: localTask.dueDate ? new Date(localTask.dueDate) : null,
+                                                                                                            // ✅ FIX 1: Wrap 'localTask.dueDate' (string) with Number()
+                                                                                                            selected: localTask.dueDate ? new Date(Number(localTask.dueDate)) : null,
                                                                                                             onChange: (date)=>{
                                                                                                                 handleSetDueDate(date);
                                                                                                                 close();
@@ -1909,22 +1923,22 @@ function TaskDetailsPanel() {
                                                                                                             calendarClassName: !isExpanded ? "datepicker-collapsed" : ""
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                            lineNumber: 428,
+                                                                                                            lineNumber: 442,
                                                                                                             columnNumber: 41
                                                                                                         }, this)
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                        lineNumber: 427,
+                                                                                                        lineNumber: 441,
                                                                                                         columnNumber: 39
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                    lineNumber: 426,
+                                                                                                    lineNumber: 440,
                                                                                                     columnNumber: 37
                                                                                                 }, this)
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 417,
+                                                                                                lineNumber: 431,
                                                                                                 columnNumber: 35
                                                                                             }, this)
                                                                                         ]
@@ -1932,13 +1946,13 @@ function TaskDetailsPanel() {
                                                                                 }
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 393,
+                                                                                lineNumber: 403,
                                                                                 columnNumber: 29
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 389,
+                                                                        lineNumber: 399,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1949,7 +1963,7 @@ function TaskDetailsPanel() {
                                                                                 children: "Reminder"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 456,
+                                                                                lineNumber: 473,
                                                                                 columnNumber: 29
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$popover$2f$popover$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Popover"], {
@@ -1962,7 +1976,7 @@ function TaskDetailsPanel() {
                                                                                                 className: "w-4 h-4 ".concat(reminderDate ? "text-gray-700" : "text-gray-400")
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 461,
+                                                                                                lineNumber: 478,
                                                                                                 columnNumber: 33
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1970,13 +1984,13 @@ function TaskDetailsPanel() {
                                                                                                 children: reminderDate ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(reminderDate, "MMM d, p") : "Add Reminder"
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 468,
+                                                                                                lineNumber: 485,
                                                                                                 columnNumber: 33
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                        lineNumber: 460,
+                                                                                        lineNumber: 477,
                                                                                         columnNumber: 31
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$headlessui$2f$react$2f$dist$2f$components$2f$transition$2f$transition$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Transition"], {
@@ -2000,53 +2014,53 @@ function TaskDetailsPanel() {
                                                                                                     calendarClassName: !isExpanded ? "datepicker-collapsed" : ""
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                    lineNumber: 493,
+                                                                                                    lineNumber: 511,
                                                                                                     columnNumber: 37
                                                                                                 }, this)
                                                                                             }, void 0, false, {
                                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                                lineNumber: 492,
+                                                                                                lineNumber: 510,
                                                                                                 columnNumber: 35
                                                                                             }, this)
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                            lineNumber: 491,
+                                                                                            lineNumber: 509,
                                                                                             columnNumber: 33
                                                                                         }, this)
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                        lineNumber: 481,
+                                                                                        lineNumber: 499,
                                                                                         columnNumber: 31
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 459,
+                                                                                lineNumber: 476,
                                                                                 columnNumber: 29
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 455,
+                                                                        lineNumber: 472,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 387,
+                                                                lineNumber: 397,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 301,
+                                                        lineNumber: 311,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                                                         className: "border-gray-100"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 513,
+                                                        lineNumber: 531,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2059,14 +2073,14 @@ function TaskDetailsPanel() {
                                                                         className: "w-5 h-5 text-gray-500"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 518,
+                                                                        lineNumber: 536,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     "Notes"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 517,
+                                                                lineNumber: 535,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -2079,20 +2093,20 @@ function TaskDetailsPanel() {
                                                                 rows: 6
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 521,
+                                                                lineNumber: 539,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 516,
+                                                        lineNumber: 534,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                                                         className: "border-gray-100"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 532,
+                                                        lineNumber: 550,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2105,14 +2119,14 @@ function TaskDetailsPanel() {
                                                                         className: "w-5 h-5 text-gray-500"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 537,
+                                                                        lineNumber: 555,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     "Tags"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 536,
+                                                                lineNumber: 554,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2129,23 +2143,23 @@ function TaskDetailsPanel() {
                                                                                     className: "w-4 h-4"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                    lineNumber: 552,
+                                                                                    lineNumber: 570,
                                                                                     columnNumber: 33
                                                                                 }, this)
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                                lineNumber: 547,
+                                                                                lineNumber: 565,
                                                                                 columnNumber: 31
                                                                             }, this)
                                                                         ]
                                                                     }, tag, true, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 542,
+                                                                        lineNumber: 560,
                                                                         columnNumber: 29
                                                                     }, this))
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 540,
+                                                                lineNumber: 558,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -2160,7 +2174,7 @@ function TaskDetailsPanel() {
                                                                         className: "flex-1 text-sm p-3 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 561,
+                                                                        lineNumber: 579,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2171,31 +2185,31 @@ function TaskDetailsPanel() {
                                                                             className: "w-5 h-5"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                            lineNumber: 573,
+                                                                            lineNumber: 591,
                                                                             columnNumber: 29
                                                                         }, this)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 568,
+                                                                        lineNumber: 586,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 557,
+                                                                lineNumber: 575,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 535,
+                                                        lineNumber: 553,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                                                         className: "border-gray-100"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 578,
+                                                        lineNumber: 596,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2208,14 +2222,14 @@ function TaskDetailsPanel() {
                                                                         className: "w-5 h-5 text-gray-500"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 583,
+                                                                        lineNumber: 601,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     "Subtasks"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 582,
+                                                                lineNumber: 600,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
@@ -2226,17 +2240,17 @@ function TaskDetailsPanel() {
                                                                             task: t
                                                                         }, t.id, false, {
                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                            lineNumber: 589,
+                                                                            lineNumber: 607,
                                                                             columnNumber: 31
                                                                         }, this))
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                    lineNumber: 587,
+                                                                    lineNumber: 605,
                                                                     columnNumber: 27
                                                                 }, this)
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 586,
+                                                                lineNumber: 604,
                                                                 columnNumber: 25
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -2251,7 +2265,7 @@ function TaskDetailsPanel() {
                                                                         className: "flex-1 text-sm p-3 bg-transparent border-none outline-none text-gray-900 placeholder-gray-500"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 597,
+                                                                        lineNumber: 615,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2262,31 +2276,31 @@ function TaskDetailsPanel() {
                                                                             className: "w-5 h-5"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                            lineNumber: 609,
+                                                                            lineNumber: 627,
                                                                             columnNumber: 29
                                                                         }, this)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                        lineNumber: 604,
+                                                                        lineNumber: 622,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                lineNumber: 593,
+                                                                lineNumber: 611,
                                                                 columnNumber: 25
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 581,
+                                                        lineNumber: 599,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
                                                         className: "border-gray-100"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 614,
+                                                        lineNumber: 632,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2299,25 +2313,25 @@ function TaskDetailsPanel() {
                                                                     className: "w-5 h-5"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                                    lineNumber: 622,
+                                                                    lineNumber: 640,
                                                                     columnNumber: 27
                                                                 }, this),
                                                                 "Delete this task"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                            lineNumber: 618,
+                                                            lineNumber: 636,
                                                             columnNumber: 25
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 617,
+                                                        lineNumber: 635,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                lineNumber: 285,
+                                                lineNumber: 295,
                                                 columnNumber: 21
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["motion"].div, {
@@ -2339,7 +2353,7 @@ function TaskDetailsPanel() {
                                                         children: "Reset"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 640,
+                                                        lineNumber: 658,
                                                         columnNumber: 23
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$StylishButton$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2350,55 +2364,55 @@ function TaskDetailsPanel() {
                                                         children: isSavingDetails ? "Saving..." : "Save Changes"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                        lineNumber: 648,
+                                                        lineNumber: 666,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                                lineNumber: 629,
+                                                lineNumber: 647,
                                                 columnNumber: 21
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                        lineNumber: 254,
+                                        lineNumber: 264,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                    lineNumber: 253,
+                                    lineNumber: 263,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                                lineNumber: 243,
+                                lineNumber: 253,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                            lineNumber: 242,
+                            lineNumber: 252,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                        lineNumber: 241,
+                        lineNumber: 251,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-                    lineNumber: 240,
+                    lineNumber: 250,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-            lineNumber: 225,
+            lineNumber: 235,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/lib/context/TaskDetailsPanel.tsx",
-        lineNumber: 224,
+        lineNumber: 234,
         columnNumber: 5
     }, this);
 }

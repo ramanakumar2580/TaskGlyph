@@ -212,11 +212,17 @@ export default function TaskCard({ task }: { task: Task }) {
   };
   const renderSmartDueDate = () => {
     if (!task.dueDate) return null;
-    const date = new Date(task.dueDate);
+
+    // ✅ FIX: Convert string timestamp to number
+    const date = new Date(Number(task.dueDate));
+
     let label = "";
     let color = "text-gray-500";
     const today = new Date().setHours(0, 0, 0, 0);
-    const taskDate = new Date(task.dueDate).setHours(0, 0, 0, 0);
+
+    // ✅ FIX: Convert string timestamp to number
+    const taskDate = new Date(Number(task.dueDate)).setHours(0, 0, 0, 0);
+
     if (taskDate < today) {
       label = format(date, "MMM d");
       color = "text-red-600 font-medium";
@@ -315,7 +321,7 @@ export default function TaskCard({ task }: { task: Task }) {
                 <TagIcon className="w-3 h-3" />
                 <span>{tag}</span>
                 <button
-                  onClick={(e) => handleRemoveTag(e, tag)} // Has stopPropagation
+                  onClick={(e) => handleRemoveTag(e, tag)} // Has stopToPropagation
                   className="text-gray-500 hover:text-red-600"
                 >
                   <XCircleIcon className="w-3 h-3" />

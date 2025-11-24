@@ -155,6 +155,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/api/notes-password/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/notes-password">> = Specific
+  const handler = {} as typeof import("../../src/app/api/notes-password/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/s3-delete/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/s3-delete">> = Specific
+  const handler = {} as typeof import("../../src/app/api/s3-delete/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/s3-upload/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/s3-upload">> = Specific
+  const handler = {} as typeof import("../../src/app/api/s3-upload/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/sync/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/sync">> = Specific
