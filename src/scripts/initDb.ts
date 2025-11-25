@@ -138,6 +138,7 @@ async function createTables() {
     `);
 
     // Pomodoro sessions table
+    // [NOTE] 'type' is TEXT, so it supports 'work', 'short_break', 'long_break'
     await client.query(`
       CREATE TABLE IF NOT EXISTS pomodoro_sessions (
         id TEXT PRIMARY KEY,
@@ -179,6 +180,8 @@ async function createTables() {
       await client.query(
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS notes_password_hash TEXT;`
       );
+
+      // [NOTE] This ensures existing tables get the 'type' column
       await client.query(
         `ALTER TABLE pomodoro_sessions ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'work';`
       );

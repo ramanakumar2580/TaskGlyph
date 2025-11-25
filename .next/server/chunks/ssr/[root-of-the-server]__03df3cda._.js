@@ -27,12 +27,12 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
     folders;
     constructor(){
         super("TaskGlyphDB");
-        // ✅ [FIX] BUMPED TO VERSION 10 for New Diary Features
+        // ✅ VERSION 10: Cleanest version for Production
+        // Removed notesPasswordHash from userMetadata for security
         this.version(10).stores({
             userMetadata: "userId, hasNotesPassword",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
             projects: "id, name, createdAt, updatedAt",
-            // [UPDATED] Added mood, tags, and isLocked to index for searching
             diaryEntries: "id, entryDate, createdAt, mood, *tags, isLocked",
             pomodoroSessions: "id, durationMinutes, completedAt, type",
             syncOutbox: "id, entityType, operation, timestamp",
@@ -40,7 +40,7 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
             notes: "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
             folders: "id, name"
         });
-        // Version 9 (Old)
+        // Version 9 (Migration history - kept for safety)
         this.version(9).stores({
             userMetadata: "userId, hasNotesPassword, notesPasswordHash",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
@@ -52,7 +52,7 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
             notes: "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
             folders: "id, name"
         });
-        // Your old versions for migration
+        // Older versions...
         this.version(8).stores({
             userMetadata: "userId, hasNotesPassword",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",

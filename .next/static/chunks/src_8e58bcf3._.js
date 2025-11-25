@@ -14,12 +14,12 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$dexie$2f$imp
 class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$dexie$2f$import$2d$wrapper$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"] {
     constructor(){
         super("TaskGlyphDB"), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "tasks", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "projects", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "diaryEntries", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "pomodoroSessions", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "syncOutbox", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "userMetadata", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "notifications", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "notes", void 0), (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_define_property$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])(this, "folders", void 0);
-        // ✅ [FIX] BUMPED TO VERSION 10 for New Diary Features
+        // ✅ VERSION 10: Cleanest version for Production
+        // Removed notesPasswordHash from userMetadata for security
         this.version(10).stores({
             userMetadata: "userId, hasNotesPassword",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
             projects: "id, name, createdAt, updatedAt",
-            // [UPDATED] Added mood, tags, and isLocked to index for searching
             diaryEntries: "id, entryDate, createdAt, mood, *tags, isLocked",
             pomodoroSessions: "id, durationMinutes, completedAt, type",
             syncOutbox: "id, entityType, operation, timestamp",
@@ -27,7 +27,7 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
             notes: "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
             folders: "id, name"
         });
-        // Version 9 (Old)
+        // Version 9 (Migration history - kept for safety)
         this.version(9).stores({
             userMetadata: "userId, hasNotesPassword, notesPasswordHash",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
@@ -39,7 +39,7 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
             notes: "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
             folders: "id, name"
         });
-        // Your old versions for migration
+        // Older versions...
         this.version(8).stores({
             userMetadata: "userId, hasNotesPassword",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",

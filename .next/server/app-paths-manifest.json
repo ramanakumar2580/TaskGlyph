@@ -1,8 +1,5 @@
 {
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/notes-password/route": "app/api/notes-password/route.js",
-  "/api/s3-delete/route": "app/api/s3-delete/route.js",
-  "/api/s3-upload/route": "app/api/s3-upload/route.js",
   "/api/sync/route": "app/api/sync/route.js",
   "/api/user/tier/route": "app/api/user/tier/route.js",
   "/app/diary/page": "app/app/diary/page.js",
@@ -10,5 +7,6 @@
   "/app/page": "app/app/page.js",
   "/app/pomodoro/page": "app/app/pomodoro/page.js",
   "/app/tasks/page": "app/app/tasks/page.js",
-  "/auth/signin/page": "app/auth/signin/page.js"
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/page": "app/page.js"
 }

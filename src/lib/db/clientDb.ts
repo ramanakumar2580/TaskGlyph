@@ -14,6 +14,7 @@ export interface UserMetadata {
   trialStartedAt: number; // timestamp
   tier: "free" | "basic" | "pro" | "ultra_pro";
   hasNotesPassword?: boolean;
+  // [SECURITY FIX] Removed notesPasswordHash from client interface
 }
 
 export interface Project {
@@ -62,7 +63,7 @@ export interface Note {
   deletedAt: number | null;
 }
 
-// --- [UPDATED] Diary Interfaces ---
+// --- Diary Interfaces ---
 
 export interface DiaryMedia {
   type: "image" | "audio";
@@ -81,10 +82,8 @@ export interface DiaryEntry {
   entryDate: string; // YYYY-MM-DD
   content: string;
   createdAt: number;
-
-  // New Feature Fields
-  mood?: string; // Emoji or ID
-  energy?: number; // 1-10
+  mood?: string;
+  energy?: number;
   weather?: DiaryWeather | null;
   location?: string;
   tags?: string[];
@@ -96,7 +95,8 @@ export interface PomodoroSession {
   id: string;
   durationMinutes: number;
   completedAt: number;
-  type: "work" | "break";
+  // [UPDATED] Added short_break and long_break. Kept 'break' for backward compatibility.
+  type: "work" | "break" | "short_break" | "long_break";
 }
 
 export interface Notification {
@@ -143,13 +143,13 @@ class TaskGlyphDB extends Dexie {
   constructor() {
     super("TaskGlyphDB");
 
-    // ✅ [FIX] BUMPED TO VERSION 10 for New Diary Features
+    // ✅ VERSION 10: Cleanest version for Production
+    // Removed notesPasswordHash from userMetadata for security
     this.version(10).stores({
       userMetadata: "userId, hasNotesPassword",
       tasks:
         "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
       projects: "id, name, createdAt, updatedAt",
-      // [UPDATED] Added mood, tags, and isLocked to index for searching
       diaryEntries: "id, entryDate, createdAt, mood, *tags, isLocked",
       pomodoroSessions: "id, durationMinutes, completedAt, type",
       syncOutbox: "id, entityType, operation, timestamp",
@@ -159,7 +159,7 @@ class TaskGlyphDB extends Dexie {
       folders: "id, name",
     });
 
-    // Version 9 (Old)
+    // Version 9 (Migration history - kept for safety)
     this.version(9).stores({
       userMetadata: "userId, hasNotesPassword, notesPasswordHash",
       tasks:
@@ -174,7 +174,7 @@ class TaskGlyphDB extends Dexie {
       folders: "id, name",
     });
 
-    // Your old versions for migration
+    // Older versions...
     this.version(8).stores({
       userMetadata: "userId, hasNotesPassword",
       tasks:
