@@ -31,7 +31,8 @@ export default function NotesPage() {
   // Custom Resize Handle Component for better UX
   const ResizeHandle = ({ className = "" }: { className?: string }) => (
     <PanelResizeHandle
-      className={`w-[2px] bg-transparent hover:bg-blue-400 transition-all duration-300 hover:w-[3px] cursor-col-resize relative group outline-none z-50 ${className}`}
+      // CHANGED: z-50 -> z-20 to ensure it stays behind modals/overlays
+      className={`w-[2px] bg-transparent hover:bg-blue-400 transition-all duration-300 hover:w-[3px] cursor-col-resize relative group outline-none z-20 ${className}`}
     >
       {/* Visual Indicator line inside the grab area */}
       <div className="absolute inset-y-0 left-1/2 w-[1px] bg-gray-200 group-hover:bg-blue-400 transition-colors h-full" />

@@ -4094,10 +4094,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
 
-  .text-\[6px\] {
-    font-size: 6px;
-  }
-
   .text-\[7px\] {
     font-size: 7px;
   }
