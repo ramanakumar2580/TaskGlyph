@@ -1659,6 +1659,10 @@
     height: 172px;
   }
 
+  .h-\[220px\] {
+    height: 220px;
+  }
+
   .h-\[450px\] {
     height: 450px;
   }
@@ -5375,6 +5379,12 @@
   @media (hover: hover) {
     .hover\:bg-indigo-50:hover {
       background-color: var(--color-indigo-50);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:bg-indigo-500:hover {
+      background-color: var(--color-indigo-500);
     }
   }
 

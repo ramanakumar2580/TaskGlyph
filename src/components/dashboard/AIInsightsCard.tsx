@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import db from "@/lib/db/clientDb";
 import { useTier } from "@/lib/db/useTier";
@@ -119,11 +119,7 @@ export default function AIInsightsCard() {
     generateInsight(tf);
   };
 
-  useEffect(() => {
-    if (!isFeatureLocked && !data && tasks.length > 0) {
-      generateInsight("weekly");
-    }
-  }, [isFeatureLocked, tasks.length]);
+  // REMOVED: useEffect for auto-refresh
 
   return (
     <motion.div
@@ -369,8 +365,27 @@ export default function AIInsightsCard() {
                 </div>
               </motion.div>
             ) : (
-              <div className="text-center py-8 text-slate-500 text-sm">
-                Not enough data to analyze.
+              // UPDATED: Start Screen Logic
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <div className="p-4 bg-indigo-500/10 rounded-full mb-4 animate-pulse">
+                  <SparklesIcon className="w-8 h-8 text-indigo-500" />
+                </div>
+                <h4 className="text-white font-bold text-lg mb-2">
+                  Ready to Analyze
+                </h4>
+                <p className="text-slate-400 text-xs max-w-[200px] mb-6">
+                  Select a timeframe to generate AI-powered productivity
+                  insights.
+                </p>
+                <button
+                  onClick={() => generateInsight(timeframe)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                >
+                  <BoltIcon className="w-3 h-3" />
+                  Generate{" "}
+                  {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}{" "}
+                  Report
+                </button>
               </div>
             )}
           </AnimatePresence>

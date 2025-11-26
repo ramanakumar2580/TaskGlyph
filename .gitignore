@@ -1,5 +1,6 @@
 # Dependencies
 /node_modules
+.next
 
 # Environment variables
 .env
@@ -7,6 +8,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.next
 
 # Log files
 npm-debug.log*

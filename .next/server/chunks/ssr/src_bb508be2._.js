@@ -102,14 +102,7 @@ function AIInsightsCard() {
         setTimeframe(tf);
         generateInsight(tf);
     };
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        if (!isFeatureLocked && !data && tasks.length > 0) {
-            generateInsight("weekly");
-        }
-    }, [
-        isFeatureLocked,
-        tasks.length
-    ]);
+    // REMOVED: useEffect for auto-refresh
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["motion"].div, {
         initial: {
             opacity: 0,
@@ -125,7 +118,7 @@ function AIInsightsCard() {
                 className: "absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 opacity-30 animate-pulse"
             }, void 0, false, {
                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                lineNumber: 134,
+                lineNumber: 130,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -135,7 +128,7 @@ function AIInsightsCard() {
                         className: "absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none"
                     }, void 0, false, {
                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                        lineNumber: 137,
+                        lineNumber: 133,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -150,12 +143,12 @@ function AIInsightsCard() {
                                             className: "w-6 h-6"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                            lineNumber: 143,
+                                            lineNumber: 139,
                                             columnNumber: 15
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 142,
+                                        lineNumber: 138,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -165,7 +158,7 @@ function AIInsightsCard() {
                                                 children: "Neural Engine"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 146,
+                                                lineNumber: 142,
                                                 columnNumber: 15
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -173,19 +166,19 @@ function AIInsightsCard() {
                                                 children: "AI Productivity Analyst"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 149,
+                                                lineNumber: 145,
                                                 columnNumber: 15
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 145,
+                                        lineNumber: 141,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                lineNumber: 141,
+                                lineNumber: 137,
                                 columnNumber: 11
                             }, this),
                             !isFeatureLocked && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -206,14 +199,14 @@ function AIInsightsCard() {
                                                     className: "w-3 h-3"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                    lineNumber: 171,
+                                                    lineNumber: 167,
                                                     columnNumber: 21
                                                 }, this),
                                                 tf
                                             ]
                                         }, tf, true, {
                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                            lineNumber: 158,
+                                            lineNumber: 154,
                                             columnNumber: 17
                                         }, this)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -224,24 +217,24 @@ function AIInsightsCard() {
                                             className: `w-4 h-4 ${loading ? "animate-spin" : ""}`
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                            lineNumber: 181,
+                                            lineNumber: 177,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 176,
+                                        lineNumber: 172,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                lineNumber: 156,
+                                lineNumber: 152,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                        lineNumber: 140,
+                        lineNumber: 136,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -263,12 +256,12 @@ function AIInsightsCard() {
                                             className: "w-8 h-8 text-indigo-400"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                            lineNumber: 200,
+                                            lineNumber: 196,
                                             columnNumber: 19
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 199,
+                                        lineNumber: 195,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
@@ -276,7 +269,7 @@ function AIInsightsCard() {
                                         children: "Unlock God Mode"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 202,
+                                        lineNumber: 198,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -288,14 +281,14 @@ function AIInsightsCard() {
                                                 children: "Pro"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 207,
+                                                lineNumber: 203,
                                                 columnNumber: 19
                                             }, this),
                                             " plan."
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 205,
+                                        lineNumber: 201,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -304,13 +297,13 @@ function AIInsightsCard() {
                                         children: "Upgrade Now"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 205,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, "locked", true, {
                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                lineNumber: 193,
+                                lineNumber: 189,
                                 columnNumber: 15
                             }, this) : loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["motion"].div, {
                                 initial: {
@@ -325,7 +318,7 @@ function AIInsightsCard() {
                                         className: "w-10 h-10 text-indigo-500 animate-spin"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 223,
+                                        lineNumber: 219,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -333,13 +326,13 @@ function AIInsightsCard() {
                                         children: "Crunching Data..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 224,
+                                        lineNumber: 220,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, "loading", true, {
                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                lineNumber: 217,
+                                lineNumber: 213,
                                 columnNumber: 15
                             }, this) : data ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$framer$2d$motion$2f$dist$2f$es$2f$render$2f$components$2f$motion$2f$proxy$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["motion"].div, {
                                 initial: {
@@ -365,7 +358,7 @@ function AIInsightsCard() {
                                                             children: data.score
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                            lineNumber: 240,
+                                                            lineNumber: 236,
                                                             columnNumber: 23
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -373,18 +366,18 @@ function AIInsightsCard() {
                                                             children: "Productivity Score"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                            lineNumber: 243,
+                                                            lineNumber: 239,
                                                             columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                    lineNumber: 239,
+                                                    lineNumber: 235,
                                                     columnNumber: 21
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 238,
+                                                lineNumber: 234,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -397,7 +390,7 @@ function AIInsightsCard() {
                                                                 className: "w-4 h-4 text-purple-400"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 252,
+                                                                lineNumber: 248,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -405,13 +398,13 @@ function AIInsightsCard() {
                                                                 children: "Hidden Pattern"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 253,
+                                                                lineNumber: 249,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 251,
+                                                        lineNumber: 247,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -421,18 +414,18 @@ function AIInsightsCard() {
                                                             children: data.hidden_pattern
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                            lineNumber: 258,
+                                                            lineNumber: 254,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 257,
+                                                        lineNumber: 253,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 250,
+                                                lineNumber: 246,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -442,7 +435,7 @@ function AIInsightsCard() {
                                                         className: "w-5 h-5 text-emerald-400 mb-2"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 266,
+                                                        lineNumber: 262,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -450,7 +443,7 @@ function AIInsightsCard() {
                                                         children: "Peak Hours"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 267,
+                                                        lineNumber: 263,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -458,13 +451,13 @@ function AIInsightsCard() {
                                                         children: data.peak_hours
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 270,
+                                                        lineNumber: 266,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 265,
+                                                lineNumber: 261,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -474,7 +467,7 @@ function AIInsightsCard() {
                                                         className: "w-5 h-5 text-purple-400 mb-2"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 277,
+                                                        lineNumber: 273,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -482,7 +475,7 @@ function AIInsightsCard() {
                                                         children: "Work Mode"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 278,
+                                                        lineNumber: 274,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -491,19 +484,19 @@ function AIInsightsCard() {
                                                         children: data.work_mode
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 281,
+                                                        lineNumber: 277,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 276,
+                                                lineNumber: 272,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 236,
+                                        lineNumber: 232,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -519,7 +512,7 @@ function AIInsightsCard() {
                                                                 className: "w-4 h-4 text-indigo-400"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 295,
+                                                                lineNumber: 291,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
@@ -530,13 +523,13 @@ function AIInsightsCard() {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 296,
+                                                                lineNumber: 292,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 294,
+                                                        lineNumber: 290,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -546,18 +539,18 @@ function AIInsightsCard() {
                                                             children: data.analysis
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                            lineNumber: 301,
+                                                            lineNumber: 297,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 300,
+                                                        lineNumber: 296,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 293,
+                                                lineNumber: 289,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -569,12 +562,12 @@ function AIInsightsCard() {
                                                             className: "w-12 h-12 text-indigo-400"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                            lineNumber: 310,
+                                                            lineNumber: 306,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 309,
+                                                        lineNumber: 305,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -582,7 +575,7 @@ function AIInsightsCard() {
                                                         children: "Primary Objective"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 312,
+                                                        lineNumber: 308,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -592,18 +585,18 @@ function AIInsightsCard() {
                                                             children: data.action
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                            lineNumber: 316,
+                                                            lineNumber: 312,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 315,
+                                                        lineNumber: 311,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 308,
+                                                lineNumber: 304,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -616,7 +609,7 @@ function AIInsightsCard() {
                                                                 className: `w-5 h-5 mb-2 ${data.burnout_risk === "High" ? "text-red-500" : "text-orange-400"}`
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 326,
+                                                                lineNumber: 322,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -624,7 +617,7 @@ function AIInsightsCard() {
                                                                 children: "Burnout"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 333,
+                                                                lineNumber: 329,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -632,13 +625,13 @@ function AIInsightsCard() {
                                                                 children: data.burnout_risk
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 336,
+                                                                lineNumber: 332,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 325,
+                                                        lineNumber: 321,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -648,7 +641,7 @@ function AIInsightsCard() {
                                                                 className: "w-5 h-5 text-blue-400 mb-2"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 349,
+                                                                lineNumber: 345,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -656,7 +649,7 @@ function AIInsightsCard() {
                                                                 children: "Momentum"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 350,
+                                                                lineNumber: 346,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -664,13 +657,13 @@ function AIInsightsCard() {
                                                                 children: data.momentum
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 353,
+                                                                lineNumber: 349,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 348,
+                                                        lineNumber: 344,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -680,7 +673,7 @@ function AIInsightsCard() {
                                                                 className: "w-5 h-5 text-green-400 mb-2"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 360,
+                                                                lineNumber: 356,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -688,7 +681,7 @@ function AIInsightsCard() {
                                                                 children: "Sustain"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 361,
+                                                                lineNumber: 357,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -696,60 +689,114 @@ function AIInsightsCard() {
                                                                 children: data.sustainability
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                                lineNumber: 364,
+                                                                lineNumber: 360,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                        lineNumber: 359,
+                                                        lineNumber: 355,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                                lineNumber: 323,
+                                                lineNumber: 319,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                        lineNumber: 291,
+                                        lineNumber: 287,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, "data", true, {
                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                lineNumber: 229,
+                                lineNumber: 225,
                                 columnNumber: 15
-                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "text-center py-8 text-slate-500 text-sm",
-                                children: "Not enough data to analyze."
-                            }, void 0, false, {
+                            }, this) : // UPDATED: Start Screen Logic
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "flex flex-col items-center justify-center h-full text-center p-8",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "p-4 bg-indigo-500/10 rounded-full mb-4 animate-pulse",
+                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$heroicons$2f$react$2f$24$2f$solid$2f$esm$2f$SparklesIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__SparklesIcon$3e$__["SparklesIcon"], {
+                                            className: "w-8 h-8 text-indigo-500"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
+                                            lineNumber: 371,
+                                            columnNumber: 19
+                                        }, this)
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
+                                        lineNumber: 370,
+                                        columnNumber: 17
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h4", {
+                                        className: "text-white font-bold text-lg mb-2",
+                                        children: "Ready to Analyze"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
+                                        lineNumber: 373,
+                                        columnNumber: 17
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-slate-400 text-xs max-w-[200px] mb-6",
+                                        children: "Select a timeframe to generate AI-powered productivity insights."
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
+                                        lineNumber: 376,
+                                        columnNumber: 17
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                        onClick: ()=>generateInsight(timeframe),
+                                        className: "flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$heroicons$2f$react$2f$24$2f$solid$2f$esm$2f$BoltIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__BoltIcon$3e$__["BoltIcon"], {
+                                                className: "w-3 h-3"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
+                                                lineNumber: 384,
+                                                columnNumber: 19
+                                            }, this),
+                                            "Generate",
+                                            " ",
+                                            timeframe.charAt(0).toUpperCase() + timeframe.slice(1),
+                                            " ",
+                                            "Report"
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
+                                        lineNumber: 380,
+                                        columnNumber: 17
+                                    }, this)
+                                ]
+                            }, void 0, true, {
                                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                                lineNumber: 372,
+                                lineNumber: 369,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                            lineNumber: 191,
+                            lineNumber: 187,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                        lineNumber: 190,
+                        lineNumber: 186,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-                lineNumber: 136,
+                lineNumber: 132,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/dashboard/AIInsightsCard.tsx",
-        lineNumber: 129,
+        lineNumber: 125,
         columnNumber: 5
     }, this);
 }
