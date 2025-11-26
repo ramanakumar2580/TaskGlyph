@@ -1,8 +1,7 @@
 {
+  "/api/ai/insights/route": "app/api/ai/insights/route.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/payment/cancel/route": "app/api/payment/cancel/route.js",
   "/api/sync/route": "app/api/sync/route.js",
   "/api/user/tier/route": "app/api/user/tier/route.js",
-  "/app/page": "app/app/page.js",
-  "/auth/signin/page": "app/auth/signin/page.js"
+  "/app/dashboard/page": "app/app/dashboard/page.js"
 }

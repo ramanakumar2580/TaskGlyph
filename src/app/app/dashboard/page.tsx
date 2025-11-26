@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import db from "@/lib/db/clientDb";
+import AIInsightsCard from "@/components/dashboard/AIInsightsCard";
 import {
   ResponsiveContainer,
   Bar,
@@ -77,8 +78,7 @@ export default function DashboardPage() {
   const [heatmapView, setHeatmapView] = useState<HeatmapView>("daily");
   const [quickTask, setQuickTask] = useState("");
 
-  // --- 1. DATA FETCHING (FIXED) ---
-  // We separate the raw query from the stable array to satisfy ESLint
+  // --- 1. DATA FETCHING ---
   const rawTasks = useLiveQuery(() => db.tasks.toArray());
   const tasks = useMemo(() => rawTasks ?? [], [rawTasks]);
 
@@ -596,14 +596,23 @@ export default function DashboardPage() {
       </header>
 
       {/* BENTO GRID - 4 COLUMNS */}
-      {/* Defined auto-rows-[180px], so span-2 = ~384px height automatically */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]"
       >
-        {/* ROW 1: Flow (1), Velocity (2), Achievements (1) */}
+        {/* ✅ 1. AI INSIGHTS CARD (UPDATED: row-span-4 to increase height) */}
+        <motion.div
+          variants={itemVariants}
+          className="col-span-1 md:col-span-2 lg:col-span-2 row-span-4"
+        >
+          <AIInsightsCard />
+        </motion.div>
+
+        {/* ✅ RIGHT COLUMN - TOP ROW */}
+
+        {/* Daily Flow */}
         <motion.div
           variants={itemVariants}
           className="bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col items-center justify-center relative overflow-hidden group hover:scale-[1.02] transition-all duration-300"
@@ -668,42 +677,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        <motion.div
-          variants={itemVariants}
-          className="md:col-span-2 bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col"
-        >
-          <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-            <Briefcase size={20} className="text-blue-500" /> Project Velocity
-          </h3>
-          <div className="flex-1 space-y-4 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
-            {projectStats.length > 0 ? (
-              projectStats.map((p, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-gray-700">{p.name}</span>
-                    <span className="font-bold text-gray-400">
-                      {p.percentage}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-1000"
-                      style={{
-                        width: `${p.percentage}%`,
-                        backgroundColor: p.color,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="h-full flex items-center justify-center text-gray-400 text-xs">
-                No active projects.
-              </div>
-            )}
-          </div>
-        </motion.div>
-
+        {/* Daily Achievements */}
         <motion.div
           variants={itemVariants}
           className="bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col"
@@ -741,7 +715,44 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* ROW 2: Pulse (1), Balance (1), Horizon (1), Capture (1) */}
+        {/* ✅ RIGHT COLUMN - MIDDLE ROW: Project Velocity */}
+        <motion.div
+          variants={itemVariants}
+          className="md:col-span-2 bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col"
+        >
+          <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+            <Briefcase size={20} className="text-blue-500" /> Project Velocity
+          </h3>
+          <div className="flex-1 space-y-4 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+            {projectStats.length > 0 ? (
+              projectStats.map((p, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-gray-700">{p.name}</span>
+                    <span className="font-bold text-gray-400">
+                      {p.percentage}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-1000"
+                      style={{
+                        width: `${p.percentage}%`,
+                        backgroundColor: p.color,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400 text-xs">
+                No active projects.
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ✅ RIGHT COLUMN - BOTTOM ROW: Task Pulse & Balance */}
         <motion.div
           variants={itemVariants}
           className="bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col justify-between"
@@ -812,69 +823,8 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        <motion.div
-          variants={itemVariants}
-          className="bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col"
-        >
-          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-3">
-            <Sunrise size={16} className="text-orange-400" /> Horizon
-          </h3>
-          <div className="flex-1 space-y-2 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
-            {upcomingTasks.length > 0 ? (
-              upcomingTasks.map((t, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 p-2 bg-white/50 rounded-xl border border-white/20"
-                >
-                  <div className="w-1 h-6 bg-orange-400 rounded-full"></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-700 truncate">
-                      {t.title}
-                    </p>
-                    <p className="text-[9px] text-gray-400">
-                      {t.dueDate
-                        ? format(new Date(t.dueDate), "MMM dd")
-                        : "Soon"}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-xs text-gray-400 text-center pt-4">
-                Clear skies ahead.
-              </div>
-            )}
-          </div>
-        </motion.div>
+        {/* ✅ REMOVED Horizon & Quick Capture from here */}
 
-        <motion.div
-          variants={itemVariants}
-          className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[32px] shadow-lg text-white flex flex-col"
-        >
-          <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
-            <Plus size={16} /> Quick Capture
-          </h3>
-          <form
-            onSubmit={handleQuickAdd}
-            className="flex-1 flex flex-col gap-2"
-          >
-            <textarea
-              value={quickTask}
-              onChange={(e) => setQuickTask(e.target.value)}
-              placeholder="Brain dump..."
-              className="flex-1 bg-white/20 rounded-xl p-3 text-xs text-white placeholder-white/60 border border-white/10 focus:outline-none focus:bg-white/30 resize-none"
-            />
-            <button
-              type="submit"
-              className="bg-white text-indigo-600 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
-            >
-              Add <Send size={12} />
-            </button>
-          </form>
-        </motion.div>
-
-        {/* ROW 3: Echoes (2), Mood (2) */}
-        {/* FIX: Removed fixed h-[380px], using row-span-2 to let grid dictate height */}
         <motion.div
           variants={itemVariants}
           className="md:col-span-2 row-span-2 bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col"
@@ -981,8 +931,6 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
-        {/* ROW 4: Peak (1), Knowledge (1), Matrix (2) */}
-        {/* FIX: Removed fixed h-[280px], added row-span-2 to match previous row */}
         <motion.div
           variants={itemVariants}
           className="bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col group row-span-2"
@@ -1109,6 +1057,69 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* ✅ MOVED HORIZON HERE */}
+        <motion.div
+          variants={itemVariants}
+          className="bg-white/70 backdrop-blur-xl p-6 rounded-[32px] border border-white/60 shadow-lg shadow-indigo-500/5 flex flex-col"
+        >
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-3">
+            <Sunrise size={16} className="text-orange-400" /> Horizon
+          </h3>
+          <div className="flex-1 space-y-2 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
+            {upcomingTasks.length > 0 ? (
+              upcomingTasks.map((t, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 p-2 bg-white/50 rounded-xl border border-white/20"
+                >
+                  <div className="w-1 h-6 bg-orange-400 rounded-full"></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-700 truncate">
+                      {t.title}
+                    </p>
+                    <p className="text-[9px] text-gray-400">
+                      {t.dueDate
+                        ? format(new Date(t.dueDate), "MMM dd")
+                        : "Soon"}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-gray-400 text-center pt-4">
+                Clear skies ahead.
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ✅ MOVED QUICK CAPTURE HERE */}
+        <motion.div
+          variants={itemVariants}
+          className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-[32px] shadow-lg text-white flex flex-col"
+        >
+          <h3 className="text-sm font-bold flex items-center gap-2 mb-4">
+            <Plus size={16} /> Quick Capture
+          </h3>
+          <form
+            onSubmit={handleQuickAdd}
+            className="flex-1 flex flex-col gap-2"
+          >
+            <textarea
+              value={quickTask}
+              onChange={(e) => setQuickTask(e.target.value)}
+              placeholder="Brain dump..."
+              className="flex-1 bg-white/20 rounded-xl p-3 text-xs text-white placeholder-white/60 border border-white/10 focus:outline-none focus:bg-white/30 resize-none"
+            />
+            <button
+              type="submit"
+              className="bg-white text-indigo-600 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
+            >
+              Add <Send size={12} />
+            </button>
+          </form>
         </motion.div>
 
         {/* ROW 5: Heatmap */}
