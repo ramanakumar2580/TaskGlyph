@@ -301,10 +301,12 @@ return __turbopack_context__.a(async (__turbopack_handle_async_dependencies__, _
 
 __turbopack_context__.s([
     "GET",
-    ()=>GET
+    ()=>GET,
+    "dynamic",
+    ()=>dynamic
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/server.js [app-route] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2f$options$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/auth/options.ts [app-route] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2f$options$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/auth/options.ts [app-route] (ecmascript)"); // Make sure this path is correct
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2d$auth$2f$next$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next-auth/next/index.js [app-route] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/db/serverDb.ts [app-route] (ecmascript)");
 var __turbopack_async_dependencies__ = __turbopack_handle_async_dependencies__([
@@ -316,6 +318,7 @@ var __turbopack_async_dependencies__ = __turbopack_handle_async_dependencies__([
 ;
 ;
 ;
+const dynamic = "force-dynamic"; // Ensure this doesn't get cached statically
 async function GET() {
     const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2d$auth$2f$next$2f$index$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["getServerSession"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2f$options$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["authOptions"]);
     if (!session?.user?.id) {
@@ -326,17 +329,14 @@ async function GET() {
         });
     }
     const userId = session.user.id;
-    // --- [THE FIX] ---
     let client;
     try {
-        // 1. Move the connection *inside* the try block
-        // This will now catch the 'ENOTFOUND' error when offline
+        // 1. Connect to Database
         client = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$db$2f$serverDb$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"].connect();
-        // 2. Query the database
-        const { rows } = await client.query("SELECT tier FROM users WHERE id = $1", [
+        // 2. Query the User's Tier and Trial Info
+        const { rows } = await client.query("SELECT tier, trial_started_at FROM users WHERE id = $1", [
             userId
         ]);
-        // --- END OF FIX ---
         if (rows.length === 0) {
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
                 error: "User not found"
@@ -345,24 +345,24 @@ async function GET() {
             });
         }
         const user = rows[0];
-        // Return the user's tier
+        // 3. Return Data
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            tier: user.tier
+            tier: user.tier || "free",
+            // Convert BigInt to number/string for JSON safety
+            trialStartedAt: user.trial_started_at ? Number(user.trial_started_at) : null
         }, {
             status: 200
         });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error) {
-        // This block will now safely catch the offline error
         console.error("❌ Error fetching user tier:", error.message);
+        // If DB is down, return 500 but frontend handles it gracefully (keeps local tier)
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             error: "Internal Server Error"
         }, {
             status: 500
-        } // Stops the crash
-        );
+        });
     } finally{
-        // 3. Always release the client if it was successfully connected
         if (client) {
             client.release();
         }

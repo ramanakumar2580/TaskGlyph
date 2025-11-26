@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth/options";
+import { authOptions } from "@/lib/auth/options"; // Make sure this path is correct
 import { getServerSession } from "next-auth/next";
 import pool from "@/lib/db/serverDb";
-import { PoolClient } from "pg"; // Import PoolClient
+import { PoolClient } from "pg";
+
+export const dynamic = "force-dynamic"; // Ensure this doesn't get cached statically
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -12,21 +14,17 @@ export async function GET() {
   }
 
   const userId = session.user.id;
-
-  // --- [THE FIX] ---
   let client: PoolClient | undefined;
 
   try {
-    // 1. Move the connection *inside* the try block
-    // This will now catch the 'ENOTFOUND' error when offline
+    // 1. Connect to Database
     client = await pool.connect();
 
-    // 2. Query the database
+    // 2. Query the User's Tier and Trial Info
     const { rows } = await client.query(
-      "SELECT tier FROM users WHERE id = $1", // Removed trial_started_at
+      "SELECT tier, trial_started_at FROM users WHERE id = $1",
       [userId]
     );
-    // --- END OF FIX ---
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -34,23 +32,28 @@ export async function GET() {
 
     const user = rows[0];
 
-    // Return the user's tier
+    // 3. Return Data
     return NextResponse.json(
       {
-        tier: user.tier,
-      }, // Removed trial_started_at
+        tier: user.tier || "free",
+        // Convert BigInt to number/string for JSON safety
+        trialStartedAt: user.trial_started_at
+          ? Number(user.trial_started_at)
+          : null,
+      },
       { status: 200 }
     );
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    // This block will now safely catch the offline error
     console.error("❌ Error fetching user tier:", error.message);
+
+    // If DB is down, return 500 but frontend handles it gracefully (keeps local tier)
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 } // Stops the crash
+      { status: 500 }
     );
   } finally {
-    // 3. Always release the client if it was successfully connected
     if (client) {
       client.release();
     }

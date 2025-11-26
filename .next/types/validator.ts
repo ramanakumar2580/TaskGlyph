@@ -92,6 +92,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/app/pricing/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/app/pricing">> = Specific
+  const handler = {} as typeof import("../../src/app/app/pricing/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/app/tasks/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/app/tasks">> = Specific
@@ -159,6 +168,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/notes-password">> = Specific
   const handler = {} as typeof import("../../src/app/api/notes-password/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/payment/cancel/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/payment/cancel">> = Specific
+  const handler = {} as typeof import("../../src/app/api/payment/cancel/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/payment/create-order/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/payment/create-order">> = Specific
+  const handler = {} as typeof import("../../src/app/api/payment/create-order/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/payment/verify/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/payment/verify">> = Specific
+  const handler = {} as typeof import("../../src/app/api/payment/verify/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

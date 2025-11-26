@@ -9,12 +9,18 @@ export interface Folder {
   updatedAt: number;
 }
 
+// ✅ [NEW] Interface for storing Payment/Tier info locally
+export interface UserSettings {
+  id: string; // We will use 'me' as the ID
+  tier: string; // Stores "Free", "Basic", "Pro", "Ultra"
+  email: string;
+}
+
 export interface UserMetadata {
   userId: string;
   trialStartedAt: number; // timestamp
   tier: "free" | "basic" | "pro" | "ultra_pro";
   hasNotesPassword?: boolean;
-  // [SECURITY FIX] Removed notesPasswordHash from client interface
 }
 
 export interface Project {
@@ -95,7 +101,6 @@ export interface PomodoroSession {
   id: string;
   durationMinutes: number;
   completedAt: number;
-  // [UPDATED] Added short_break and long_break. Kept 'break' for backward compatibility.
   type: "work" | "break" | "short_break" | "long_break";
 }
 
@@ -140,11 +145,29 @@ class TaskGlyphDB extends Dexie {
   notes!: Dexie.Table<Note, string>;
   folders!: Dexie.Table<Folder, string>;
 
+  // ✅ [NEW] Table registration
+  userSettings!: Dexie.Table<UserSettings, string>;
+
   constructor() {
     super("TaskGlyphDB");
 
-    // ✅ VERSION 10: Cleanest version for Production
-    // Removed notesPasswordHash from userMetadata for security
+    // ✅ VERSION 11: Added userSettings table
+    this.version(11).stores({
+      userSettings: "id", // Simple Key-Value store
+      userMetadata: "userId, hasNotesPassword",
+      tasks:
+        "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
+      projects: "id, name, createdAt, updatedAt",
+      diaryEntries: "id, entryDate, createdAt, mood, *tags, isLocked",
+      pomodoroSessions: "id, durationMinutes, completedAt, type",
+      syncOutbox: "id, entityType, operation, timestamp",
+      notifications: "id, userId, read, createdAt",
+      notes:
+        "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
+      folders: "id, name",
+    });
+
+    // Version 10
     this.version(10).stores({
       userMetadata: "userId, hasNotesPassword",
       tasks:
@@ -159,7 +182,7 @@ class TaskGlyphDB extends Dexie {
       folders: "id, name",
     });
 
-    // Version 9 (Migration history - kept for safety)
+    // Version 9
     this.version(9).stores({
       userMetadata: "userId, hasNotesPassword, notesPasswordHash",
       tasks:

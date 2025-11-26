@@ -39,7 +39,7 @@ async function createTables() {
     console.log("Creating tables...");
     await client.query("BEGIN");
 
-    // Users table
+    // 1. Users table (Updated with tier)
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
@@ -47,13 +47,13 @@ async function createTables() {
         name TEXT,
         password TEXT,
         notes_password_hash TEXT,
-        tier TEXT DEFAULT 'free',
+        tier TEXT DEFAULT 'free', 
         trial_started_at BIGINT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 
-    // Projects table
+    // 2. Projects table
     await client.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
@@ -66,7 +66,7 @@ async function createTables() {
       );
     `);
 
-    // Tasks table
+    // 3. Tasks table
     await client.query(`
       CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
@@ -90,7 +90,7 @@ async function createTables() {
       );
     `);
 
-    // Folders table
+    // 4. Folders table
     await client.query(`
       CREATE TABLE IF NOT EXISTS folders (
         id TEXT PRIMARY KEY,
@@ -101,7 +101,7 @@ async function createTables() {
       );
     `);
 
-    // Notes table
+    // 5. Notes table
     await client.query(`
       CREATE TABLE IF NOT EXISTS notes (
         id TEXT PRIMARY KEY,
@@ -119,7 +119,7 @@ async function createTables() {
       );
     `);
 
-    // Diary entries table
+    // 6. Diary entries table
     await client.query(`
       CREATE TABLE IF NOT EXISTS diary_entries (
         id TEXT PRIMARY KEY,
@@ -137,8 +137,7 @@ async function createTables() {
       );
     `);
 
-    // Pomodoro sessions table
-    // [NOTE] 'type' is TEXT, so it supports 'work', 'short_break', 'long_break'
+    // 7. Pomodoro sessions table
     await client.query(`
       CREATE TABLE IF NOT EXISTS pomodoro_sessions (
         id TEXT PRIMARY KEY,
@@ -149,7 +148,7 @@ async function createTables() {
       );
     `);
 
-    // User devices table
+    // 8. User devices table
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_devices (
         id TEXT PRIMARY KEY,
@@ -159,7 +158,7 @@ async function createTables() {
       );
     `);
 
-    // Notifications table
+    // 9. Notifications table
     await client.query(`
       CREATE TABLE IF NOT EXISTS notifications (
         id TEXT PRIMARY KEY,
@@ -171,17 +170,37 @@ async function createTables() {
       );
     `);
 
+    // ✅ 10. PAYMENTS TABLE (NEW)
+    // Stores Razorpay transaction history
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id TEXT PRIMARY KEY, -- razorpay_payment_id
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        order_id TEXT NOT NULL,
+        amount INTEGER NOT NULL, -- in paise
+        currency TEXT DEFAULT 'INR',
+        plan_name TEXT NOT NULL, -- 'Basic', 'Pro', 'Ultra'
+        status TEXT DEFAULT 'success',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // --- Column Updates (ALTER TABLE) ---
-    // This allows you to run the script on an existing DB to add new columns
+    // This allows you to run the script on an existing DB to add new columns safely
     try {
+      // User Updates
       await client.query(
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;`
       );
       await client.query(
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS notes_password_hash TEXT;`
       );
+      // Ensure tier column exists for existing users
+      await client.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'free';`
+      );
 
-      // [NOTE] This ensures existing tables get the 'type' column
+      // Pomodoro Updates
       await client.query(
         `ALTER TABLE pomodoro_sessions ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'work';`
       );
@@ -202,9 +221,6 @@ async function createTables() {
         "reminder_10_sent BOOLEAN DEFAULT false",
       ];
       for (const col of taskCols) {
-        // Simple split to get column name for "IF NOT EXISTS" check logic is hard in raw SQL without a function
-        // So we just try-catch the ADD COLUMN or use specific "ADD COLUMN IF NOT EXISTS" syntax (Postgres 9.6+)
-        // Since we used IF NOT EXISTS in the string above, we just run it directly:
         const colName = col.split(" ")[0];
         await client.query(
           `ALTER TABLE tasks ADD COLUMN IF NOT EXISTS ${colName} ${col.substring(

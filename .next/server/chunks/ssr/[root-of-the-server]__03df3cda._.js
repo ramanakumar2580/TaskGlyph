@@ -25,10 +25,24 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
     notifications;
     notes;
     folders;
+    // ✅ [NEW] Table registration
+    userSettings;
     constructor(){
         super("TaskGlyphDB");
-        // ✅ VERSION 10: Cleanest version for Production
-        // Removed notesPasswordHash from userMetadata for security
+        // ✅ VERSION 11: Added userSettings table
+        this.version(11).stores({
+            userSettings: "id",
+            userMetadata: "userId, hasNotesPassword",
+            tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
+            projects: "id, name, createdAt, updatedAt",
+            diaryEntries: "id, entryDate, createdAt, mood, *tags, isLocked",
+            pomodoroSessions: "id, durationMinutes, completedAt, type",
+            syncOutbox: "id, entityType, operation, timestamp",
+            notifications: "id, userId, read, createdAt",
+            notes: "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
+            folders: "id, name"
+        });
+        // Version 10
         this.version(10).stores({
             userMetadata: "userId, hasNotesPassword",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
@@ -40,7 +54,7 @@ class TaskGlyphDB extends __TURBOPACK__imported__module__$5b$project$5d2f$node_m
             notes: "id, folderId, isPinned, deletedAt, isQuickNote, title, updatedAt, *tags",
             folders: "id, name"
         });
-        // Version 9 (Migration history - kept for safety)
+        // Version 9
         this.version(9).stores({
             userMetadata: "userId, hasNotesPassword, notesPasswordHash",
             tasks: "id, title, completed, createdAt, updatedAt, projectId, parentId, dueDate, priority, *tags, reminderAt, recurringSchedule, meetLink, reminder_30_sent, reminder_20_sent, reminder_10_sent",
