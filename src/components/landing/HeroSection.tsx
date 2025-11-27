@@ -86,10 +86,6 @@ export default function HeroSection() {
           <br />
           <span className="text-blue-600">Even When You&apos;re Offline.</span>
         </h1>
-        <p className="mt-4 text-gray-600 max-w-3xl mx-auto">
-          Demo — auto-scrolling screenshots inside a laptop mockup. Hover to
-          pause.
-        </p>
         <div className="mt-6">
           <Link
             href="/auth/signin"

@@ -29,7 +29,7 @@ export default function FeaturesSection() {
         "Priorities & details",
         "Always available offline",
       ],
-      image: "/images/Tasks.png", // Ensure paths start with /
+      image: "/Images/Tasks.png", // Ensure paths start with /
       imageSide: "right",
     },
     {
@@ -42,7 +42,7 @@ export default function FeaturesSection() {
         "Clean & focused writing",
         "Syncs across devices",
       ],
-      image: "/images/Notes.png",
+      image: "/Images/Notes.png",
       imageSide: "left",
     },
     {
@@ -55,7 +55,7 @@ export default function FeaturesSection() {
         "Simple & private entry",
         "Secure cloud backup (Paid)",
       ],
-      image: "/images/Diary.png",
+      image: "/Images/Diary.png",
       imageSide: "right",
     },
     {
@@ -68,7 +68,7 @@ export default function FeaturesSection() {
         "Persistent across tabs",
         "Session history & stats",
       ],
-      image: "/images/Pomodoro.png",
+      image: "/Images/Pomodoro.png",
       imageSide: "left",
     },
   ];
