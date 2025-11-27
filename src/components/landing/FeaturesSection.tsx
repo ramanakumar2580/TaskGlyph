@@ -13,7 +13,7 @@ import {
   sectionVariant,
   itemVariantXLeft,
   itemVariantXRight,
-} from "@/lib/animations"; // Import variants
+} from "@/lib/animations";
 
 export default function FeaturesSection() {
   const features = [
@@ -27,8 +27,8 @@ export default function FeaturesSection() {
         "Priorities & details",
         "Always available offline",
       ],
-      imagePlaceholder: "[Screenshot/Animation: Tasks]",
-      imageSide: "right", // 'right' or 'left'
+      image: "Images/Tasks.png",
+      imageSide: "right",
     },
     {
       icon: PencilSquareIcon,
@@ -40,7 +40,7 @@ export default function FeaturesSection() {
         "Clean & focused writing",
         "Syncs across devices",
       ],
-      imagePlaceholder: "[Screenshot/Animation: Notes]",
+      image: "Images/Notes.png",
       imageSide: "left",
     },
     {
@@ -53,7 +53,7 @@ export default function FeaturesSection() {
         "Simple & private entry",
         "Secure cloud backup (Paid)",
       ],
-      imagePlaceholder: "[Screenshot: Diary]",
+      image: "Images/Diary.png",
       imageSide: "right",
     },
     {
@@ -66,7 +66,7 @@ export default function FeaturesSection() {
         "Persistent across tabs",
         "Session history & stats",
       ],
-      imagePlaceholder: "[Screenshot: Pomodoro]",
+      image: "Images/Pomodoro.png",
       imageSide: "left",
     },
   ];
@@ -99,12 +99,12 @@ export default function FeaturesSection() {
           {features.map((feature) => (
             <motion.div
               key={feature.title}
-              variants={sectionVariant} // Animate each block
+              variants={sectionVariant}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               className={`flex flex-col md:flex-row items-center gap-12 lg:gap-20 ${
-                feature.imageSide === "left" ? "md:flex-row-reverse" : "" // Control image side
+                feature.imageSide === "left" ? "md:flex-row-reverse" : ""
               }`}
             >
               {/* Text Content */}
@@ -126,10 +126,9 @@ export default function FeaturesSection() {
                 </ul>
               </div>
 
-              {/* Image Placeholder */}
+              {/* Feature Image */}
               <div className="md:w-1/2">
                 <motion.div
-                  // Animate image based on side
                   variants={
                     feature.imageSide === "left"
                       ? itemVariantXLeft
@@ -138,11 +137,14 @@ export default function FeaturesSection() {
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.7 }} // Slightly longer duration for effect
+                  transition={{ duration: 0.7 }}
                 >
-                  <div className="aspect-video bg-gray-100 rounded-lg shadow-xl flex items-center justify-center border border-gray-200 transform transition-transform hover:scale-105 duration-300">
-                    <p className="text-gray-500">{feature.imagePlaceholder}</p>
-                    {/* Example Image tag:  */}
+                  <div className="aspect-video rounded-lg shadow-xl overflow-hidden border border-gray-200 hover:scale-105 transition-transform duration-300 bg-white">
+                    <img
+                      src={feature.image}
+                      alt={feature.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </motion.div>
               </div>

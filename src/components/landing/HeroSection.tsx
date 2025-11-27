@@ -1,92 +1,211 @@
 // src/components/landing/HeroSection.tsx
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useAnimation } from "framer-motion";
 import Link from "next/link";
 
-export default function HeroSection() {
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-blue-50/50 to-white pt-36 pb-24 md:pt-48 md:pb-32">
-      {/* Background elements */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-[600px] grid grid-cols-2 -space-x-40 opacity-30 pointer-events-none"
-      >
-        <div className="blur-[120px] h-64 bg-gradient-to-br from-blue-100 to-purple-200"></div>
-        <div className="blur-[120px] h-40 bg-gradient-to-r from-cyan-100 to-sky-200 translate-y-20"></div>
-      </div>
-      {/* Animated Glow Element */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 0.1, scale: 1.5 }}
-        transition={{
-          duration: 1.5,
-          delay: 0.5,
-          repeat: Infinity,
-          repeatType: "reverse",
-          ease: "easeInOut",
-        }}
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 rounded-full blur-3xl -z-10 pointer-events-none"
-      />
+const IMAGES = [
+  "/images/shot-1.png",
+  "/images/shot-2.png",
+  "/images/shot-3.png",
+];
 
+export default function HeroSection() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const stackRef = useRef<HTMLDivElement | null>(null);
+  const controls = useAnimation();
+  const [scrollDistance, setScrollDistance] = useState(0);
+  const [duration, setDuration] = useState(14);
+  const [isHovering, setIsHovering] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
+
+  // Measure heights after images load or window resize
+  useEffect(() => {
+    function measure() {
+      const container = containerRef.current;
+      const stack = stackRef.current;
+      if (!container || !stack) return;
+
+      const containerH = container.clientHeight;
+      const stackH = stack.scrollHeight;
+
+      const distance = Math.max(0, stackH - containerH);
+      setScrollDistance(distance);
+
+      // duration scales with distance so it feels natural
+      const base = 10;
+      const comp = Math.min(
+        36,
+        Math.max(6, Math.round((distance / 600) * base + 6))
+      );
+      setDuration(comp);
+    }
+
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [loadedCount]);
+
+  // Start/stop animation
+  useEffect(() => {
+    if (!containerRef.current || !stackRef.current) return;
+
+    if (scrollDistance <= 2) {
+      controls.set({ y: 0 });
+      return;
+    }
+    if (isHovering) {
+      controls.stop();
+      return;
+    }
+
+    controls.start({
+      y: [0, -scrollDistance, 0],
+      transition: {
+        duration: duration,
+        ease: "linear",
+        times: [0, 0.5, 1],
+        repeat: Infinity,
+      },
+    });
+  }, [scrollDistance, duration, isHovering, controls]);
+
+  function handleImgLoad() {
+    setLoadedCount((c) => c + 1);
+  }
+
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-blue-50/50 to-white pt-28 pb-28 md:pt-44 md:pb-32">
+      {/* small header */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 tracking-tight leading-tight"
-        >
-          Never Loose Your Flow,
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900">
+          Never Lose Your Flow,
           <br />
-          <span className="text-blue-600 drop-shadow-sm">
-            Even When You&apos;re Offline.
-          </span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-gray-600 leading-relaxed"
-        >
-          TaskGlyph is your all-in-one productivity workspace (Tasks, Notes,
-          Diary, Pomodoro) designed to work seamlessly offline and sync
-          automatically. Stop context switching, start focusing.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4"
-        >
+          <span className="text-blue-600">Even When You&apos;re Offline.</span>
+        </h1>
+        <p className="mt-4 text-gray-600 max-w-3xl mx-auto">
+          Demo — auto-scrolling screenshots inside a laptop mockup. Hover to
+          pause.
+        </p>
+        <div className="mt-6">
           <Link
             href="/auth/signin"
-            className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-150 ease-in-out shadow-lg hover:shadow-blue-500/50 transform hover:-translate-y-1"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg shadow"
           >
             Try TaskGlyph Free
           </Link>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Laptop Mockup Visual */}
-      <motion.div
-        initial={{ opacity: 0, y: 60, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.9, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="relative mt-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 z-10"
-      >
-        <div className="relative mx-auto border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-[172px] max-w-[301px] md:h-[294px] md:max-w-[512px] lg:h-[344px] lg:max-w-[600px]">
-          <div className="rounded-lg overflow-hidden h-[156px] md:h-[278px] lg:h-[328px] bg-white">
-            <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
-              <p className="text-gray-500 font-medium text-sm md:text-base">
-                [TaskGlyph Dashboard Preview]
-              </p>
-            </div>
+      {/* laptop mockup */}
+      <div className="relative mt-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        {/* bezel */}
+        <div
+          className="mx-auto rounded-2xl bg-gray-900 border-[8px] border-gray-800 overflow-hidden relative"
+          // UPDATED: Changed maxWidth to 800 and height to 500 for a medium size
+          style={{ width: "100%", maxWidth: 800, height: 500 }}
+        >
+          {/* screen mask */}
+          <div
+            ref={containerRef}
+            className="w-full h-full bg-[#f4f5f7] relative overflow-hidden"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            {/* stacked screenshots */}
+            <motion.div
+              ref={stackRef}
+              animate={controls}
+              className="w-full flex flex-col items-stretch"
+              style={{ willChange: "transform" }}
+            >
+              {IMAGES.map((src, idx) => (
+                <div
+                  key={idx}
+                  className="w-full"
+                  // small negative margin to slightly overlap seams
+                  style={{ marginTop: idx === 0 ? 0 : -6 }}
+                >
+                  <img
+                    src={src}
+                    alt={`screenshot-${idx + 1}`}
+                    onLoad={handleImgLoad}
+                    draggable={false}
+                    style={{
+                      width: "100%",
+                      // UPDATED: Set height to 100% and objectFit cover to ensure it fits the new frame perfectly
+                      height: "100%",
+                      display: "block",
+                      objectFit: "cover",
+                      borderRadius: 6,
+                      boxShadow: "0 8px 30px rgba(6,8,15,0.06)",
+                    }}
+                  />
+                </div>
+              ))}
+            </motion.div>
+
+            {/* top & bottom gradient masks */}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 56,
+                pointerEvents: "none",
+                background:
+                  "linear-gradient(180deg, rgba(244,245,247,1) 0%, rgba(244,245,247,0) 85%)",
+              }}
+            />
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 56,
+                pointerEvents: "none",
+                background:
+                  "linear-gradient(0deg, rgba(244,245,247,1) 0%, rgba(244,245,247,0) 85%)",
+              }}
+            />
+
+            {/* subtle inner rim */}
+            <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-black/6" />
           </div>
         </div>
-        <div className="relative mx-auto bg-gray-700 rounded-b-xl rounded-t-sm h-[17px] max-w-[351px] md:h-[21px] md:max-w-[597px] lg:h-[25px] lg:max-w-[700px]">
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 rounded-b-lg w-[56px] h-[5px] md:w-[96px] md:h-[8px] lg:w-[120px] lg:h-[10px] bg-gray-800"></div>
+
+        {/* laptop base */}
+        <div
+          className="mx-auto bg-gray-700 rounded-b-2xl mt-4"
+          // UPDATED: Scaled down base width to 800 and height to 28
+          style={{ height: 28, maxWidth: 800 }}
+        >
+          <div
+            className="relative w-full"
+            style={{ maxWidth: 800, margin: "0 auto" }}
+          >
+            <div
+              className="absolute left-1/2 -translate-x-1/2 rounded-b-lg"
+              // UPDATED: Scaled down the hinge width slightly
+              style={{
+                width: 120,
+                height: 10,
+                backgroundColor: "#2b3440",
+                top: -10,
+              }}
+            />
+          </div>
         </div>
-      </motion.div>
+
+        <div className="mt-3 text-center text-sm text-gray-500">
+          Auto-scrolling demo — hover to pause
+        </div>
+      </div>
     </section>
   );
 }
