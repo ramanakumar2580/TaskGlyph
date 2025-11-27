@@ -8,9 +8,9 @@ import Link from "next/link";
 /* eslint-disable @next/next/no-img-element */
 
 const IMAGES = [
-  "/images/shot-1.png",
-  "/images/shot-2.png",
-  "/images/shot-3.png",
+  "/Images/shot-1.png",
+  "/Images/shot-2.png",
+  "/Images/shot-3.png",
 ];
 
 export default function HeroSection() {

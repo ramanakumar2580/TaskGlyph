@@ -15,6 +15,8 @@ import {
   itemVariantXRight,
 } from "@/lib/animations";
 
+/* eslint-disable @next/next/no-img-element */
+
 export default function FeaturesSection() {
   const features = [
     {
@@ -27,7 +29,7 @@ export default function FeaturesSection() {
         "Priorities & details",
         "Always available offline",
       ],
-      image: "Images/Tasks.png",
+      image: "/images/Tasks.png", // Ensure paths start with /
       imageSide: "right",
     },
     {
@@ -40,7 +42,7 @@ export default function FeaturesSection() {
         "Clean & focused writing",
         "Syncs across devices",
       ],
-      image: "Images/Notes.png",
+      image: "/images/Notes.png",
       imageSide: "left",
     },
     {
@@ -53,7 +55,7 @@ export default function FeaturesSection() {
         "Simple & private entry",
         "Secure cloud backup (Paid)",
       ],
-      image: "Images/Diary.png",
+      image: "/images/Diary.png",
       imageSide: "right",
     },
     {
@@ -66,7 +68,7 @@ export default function FeaturesSection() {
         "Persistent across tabs",
         "Session history & stats",
       ],
-      image: "Images/Pomodoro.png",
+      image: "/images/Pomodoro.png",
       imageSide: "left",
     },
   ];
@@ -127,7 +129,7 @@ export default function FeaturesSection() {
               </div>
 
               {/* Feature Image */}
-              <div className="md:w-1/2">
+              <div className="md:w-1/2 w-full">
                 <motion.div
                   variants={
                     feature.imageSide === "left"
@@ -139,11 +141,13 @@ export default function FeaturesSection() {
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.7 }}
                 >
-                  <div className="aspect-video rounded-lg shadow-xl overflow-hidden border border-gray-200 hover:scale-105 transition-transform duration-300 bg-white">
+                  {/* CHANGED: Removed aspect-video and object-cover */}
+                  <div className="rounded-xl shadow-2xl overflow-hidden border border-gray-200/50 hover:scale-[1.02] transition-transform duration-300 bg-white">
                     <img
                       src={feature.image}
                       alt={feature.title}
-                      className="w-full h-full object-cover"
+                      // CHANGED: w-full h-auto ensures the image fits perfectly without cropping
+                      className="w-full h-auto block"
                     />
                   </div>
                 </motion.div>
