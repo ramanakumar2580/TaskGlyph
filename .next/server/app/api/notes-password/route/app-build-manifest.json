@@ -1,15 +1,12 @@
 {
   "pages": {
     "/api/notes-password/route": [
-      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_4e3b0bdd._.js",
-      "static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js",
-      "static/chunks/node_modules_next_dist_compiled_next-devtools_index_a9cb0712.js",
-      "static/chunks/node_modules_next_dist_compiled_5150ccfd._.js",
-      "static/chunks/node_modules_next_dist_client_cf1d9188._.js",
-      "static/chunks/node_modules_next_dist_b0daae9a._.js",
-      "static/chunks/4e2c9_@swc_helpers_cjs_2b52ba32._.js",
-      "static/chunks/_a0ff3932._.js",
-      "static/chunks/turbopack-_3fb52da9._.js"
+      "static/chunks/4cb6534f51b01916.js",
+      "static/chunks/9ecd4369c2649b4f.js",
+      "static/chunks/46b855c221099f30.js",
+      "static/chunks/dc426f16fa1825a2.js",
+      "static/chunks/b5f473a9c84f031e.js",
+      "static/chunks/turbopack-9c3a43ce0361d142.js"
     ]
   }
 }
