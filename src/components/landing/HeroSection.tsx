@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import Link from "next/link";
 
+/* eslint-disable @next/next/no-img-element */
+
 const IMAGES = [
   "/images/shot-1.png",
   "/images/shot-2.png",
@@ -103,7 +105,6 @@ export default function HeroSection() {
         {/* bezel */}
         <div
           className="mx-auto rounded-2xl bg-gray-900 border-[8px] border-gray-800 overflow-hidden relative"
-          // UPDATED: Changed maxWidth to 800 and height to 500 for a medium size
           style={{ width: "100%", maxWidth: 800, height: 500 }}
         >
           {/* screen mask */}
@@ -124,9 +125,10 @@ export default function HeroSection() {
                 <div
                   key={idx}
                   className="w-full"
-                  // small negative margin to slightly overlap seams
+                  // slight overlap to hide seams
                   style={{ marginTop: idx === 0 ? 0 : -6 }}
                 >
+                  {/* REVERTED TO STANDARD IMG TAG FOR LAYOUT SAFETY */}
                   <img
                     src={src}
                     alt={`screenshot-${idx + 1}`}
@@ -134,10 +136,9 @@ export default function HeroSection() {
                     draggable={false}
                     style={{
                       width: "100%",
-                      // UPDATED: Set height to 100% and objectFit cover to ensure it fits the new frame perfectly
-                      height: "100%",
+                      height: "100%", // Ensures it fills the frame height exactly
                       display: "block",
-                      objectFit: "cover",
+                      objectFit: "cover", // Ensures no stretching; crops if necessary
                       borderRadius: 6,
                       boxShadow: "0 8px 30px rgba(6,8,15,0.06)",
                     }}
@@ -182,7 +183,6 @@ export default function HeroSection() {
         {/* laptop base */}
         <div
           className="mx-auto bg-gray-700 rounded-b-2xl mt-4"
-          // UPDATED: Scaled down base width to 800 and height to 28
           style={{ height: 28, maxWidth: 800 }}
         >
           <div
@@ -191,7 +191,6 @@ export default function HeroSection() {
           >
             <div
               className="absolute left-1/2 -translate-x-1/2 rounded-b-lg"
-              // UPDATED: Scaled down the hinge width slightly
               style={{
                 width: 120,
                 height: 10,
