@@ -1,4 +1,3 @@
-// next.config.js
 import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
@@ -9,17 +8,17 @@ const withPWA = withPWAInit({
   reloadOnOnline: true,
   workboxOptions: {
     disableDevLogs: true,
-    // 👇 THIS IS THE FIX:
-    // This tells it to stop looking for the files that are causing the 404 error
+    // 👇 UPDATED: Stronger filter that catches ANY file with these names
     exclude: [
-      /_buildManifest\.js$/,
-      /_ssgManifest\.js$/,
-      /_middlewareManifest\.js$/,
+      /middleware-manifest\.json$/,
+      /build-manifest\.json$/,
+      /.*_buildManifest\.js$/, // 👈 Added ".*" to match any path
+      /.*_middlewareManifest\.js$/,
+      /.*_ssgManifest\.js$/,
     ],
   },
 });
 
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     remotePatterns: [
