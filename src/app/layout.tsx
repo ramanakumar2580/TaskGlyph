@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "react-datepicker/dist/react-datepicker.css";
+// Import LayoutClient here so it's available
+import LayoutClient from "./layout-client";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TaskGlyph",
   description: "Offline-first productivity for knowledge workers",
+  manifest: "/manifest.json", // 👈 ADD THIS LINE HERE
 };
 
 export default function RootLayout({
@@ -24,6 +27,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-// Import LayoutClient here so it's available
-import LayoutClient from "./layout-client";
