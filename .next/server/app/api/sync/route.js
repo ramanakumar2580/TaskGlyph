@@ -1,10 +1,156 @@
-var R=require("../../../chunks/[turbopack]_runtime.js")("server/app/api/sync/route.js")
-R.c("server/chunks/node_modules_next_43569c26._.js")
-R.c("server/chunks/node_modules_next-auth_b9efd365._.js")
-R.c("server/chunks/node_modules_openid-client_d15f72b3._.js")
-R.c("server/chunks/node_modules_jose_dist_node_cjs_bd88468e._.js")
-R.c("server/chunks/node_modules_49dd0506._.js")
-R.c("server/chunks/[root-of-the-server]__6c1c0881._.js")
-R.m("[project]/.next-internal/server/app/api/sync/route/actions.js [app-rsc] (server actions loader, ecmascript)")
-R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/sync/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
-module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/sync/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports
+(()=>{var a={};a.id=711,a.ids=[711],a.modules={261:a=>{"use strict";a.exports=require("next/dist/shared/lib/router/utils/app-paths")},3295:a=>{"use strict";a.exports=require("next/dist/server/app-render/after-task-async-storage.external.js")},5486:a=>{"use strict";a.exports=require("bcrypt")},8622:(a,b,c)=>{"use strict";c.a(a,async(a,d)=>{try{c.d(b,{A:()=>g});var e=c(64939),f=a([e]);e=(f.then?(await f)():f)[0];let g=global.pgPool??new e.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:!1}});d()}catch(a){d(a)}})},10846:a=>{"use strict";a.exports=require("next/dist/compiled/next-server/app-page.runtime.prod.js")},11723:a=>{"use strict";a.exports=require("querystring")},12412:a=>{"use strict";a.exports=require("assert")},19121:a=>{"use strict";a.exports=require("next/dist/server/app-render/action-async-storage.external.js")},28354:a=>{"use strict";a.exports=require("util")},29294:a=>{"use strict";a.exports=require("next/dist/server/app-render/work-async-storage.external.js")},44870:a=>{"use strict";a.exports=require("next/dist/compiled/next-server/app-route.runtime.prod.js")},52062:(a,b,c)=>{"use strict";c.a(a,async(a,d)=>{try{c.r(b),c.d(b,{GET:()=>j,POST:()=>k});var e=c(10641),f=c(52963),g=c(95645),h=c(8622),i=a([g,h]);async function j(a){let b,c=await (0,f.getServerSession)(g.N);if(!c?.user?.id)return e.NextResponse.json({error:"Unauthorized"},{status:401});let{searchParams:d}=new URL(a.url),i=d.get("since")||"0",j=c.user.id;try{b=await h.A.connect(),await b.query("BEGIN");let a=Date.now(),[c,d,f,g,k,l,m,n]=await Promise.all([b.query(`
+          SELECT 
+            id as "userId", 
+            tier,
+            trial_started_at as "trialStartedAt",
+            (notes_password_hash IS NOT NULL) as "hasNotesPassword"
+          FROM users 
+          WHERE id = $1
+        `,[j]),b.query(`
+          SELECT 
+            id, name, description,
+            accent_color as "accentColor",
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM projects 
+          WHERE user_id = $1 AND updated_at > $2
+        `,[j,i]),b.query(`
+          SELECT 
+            id, title, completed, notes, priority, tags, meet_link,
+            created_at as "createdAt",
+            updated_at as "updatedAt",
+            project_id as "projectId",
+            parent_id as "parentId",
+            due_date as "dueDate",
+            recurring_schedule as "recurringSchedule",
+            reminder_at as "reminderAt",
+            reminder_30_sent,
+            reminder_20_sent,
+            reminder_10_sent
+          FROM tasks 
+          WHERE user_id = $1 AND updated_at > $2
+        `,[j,i]),b.query(`
+          SELECT 
+            id, title, content, tags,
+            created_at as "createdAt",
+            updated_at as "updatedAt",
+            folder_id as "folderId",
+            is_pinned as "isPinned",
+            is_locked as "isLocked",
+            is_quick_note as "isQuickNote",
+            deleted_at as "deletedAt"
+          FROM notes 
+          WHERE user_id = $1 AND updated_at > $2
+        `,[j,i]),b.query(`
+          SELECT 
+            id, name,
+            created_at as "createdAt",
+            updated_at as "updatedAt"
+          FROM folders 
+          WHERE user_id = $1 AND updated_at > $2
+        `,[j,i]),b.query(`
+          SELECT 
+            id, content,
+            entry_date as "entryDate",
+            created_at as "createdAt",
+            mood,
+            energy,
+            weather,
+            location,
+            tags,
+            is_locked as "isLocked",
+            media
+          FROM diary_entries 
+          WHERE user_id = $1 AND created_at > $2
+        `,[j,i]),b.query(`
+          SELECT 
+            id, type,
+            duration_minutes as "durationMinutes",
+            completed_at as "completedAt"
+          FROM pomodoro_sessions 
+          WHERE user_id = $1 AND completed_at > $2
+        `,[j,i]),b.query(`
+          SELECT 
+            id, message, link, read,
+            user_id as "userId",
+            (EXTRACT(EPOCH FROM created_at) * 1000) as "createdAt"
+          FROM notifications 
+          WHERE user_id = $1 AND (EXTRACT(EPOCH FROM created_at) * 1000) > $2
+        `,[j,i])]);return await b.query("COMMIT"),e.NextResponse.json({timestamp:a,userMetadata:c.rows,projects:d.rows,tasks:f.rows,notes:g.rows,folders:k.rows,diaryEntries:l.rows.map(a=>({...a,weather:a.weather?JSON.parse(a.weather):null,media:a.media?JSON.parse(a.media):[]})),pomodoroSessions:m.rows,notifications:n.rows})}catch(a){return b&&await b.query("ROLLBACK"),console.error("Failed to fetch all data for user:",j,a),e.NextResponse.json({error:"Failed to fetch data: "+a.message},{status:500})}finally{b&&b.release()}}async function k(a){let b,c,d=await (0,f.getServerSession)(g.N);if(!d?.user?.id)return e.NextResponse.json({error:"Unauthorized"},{status:401});let i=d.user.id;try{if(b=(await a.json()).operations,!Array.isArray(b))throw Error("Invalid operations format")}catch(a){return e.NextResponse.json({error:"Invalid request body: "+a.message},{status:400})}let j=[];try{c=await h.A.connect();let{rows:a}=await c.query("SELECT tier FROM users WHERE id = $1",[i]);if(0===a.length)return e.NextResponse.json({error:"User not found"},{status:404});let d=a[0].tier;for(let a of(await c.query("BEGIN"),b))try{let b="",e=[];switch(a.entityType){case"project":if("create"===a.operation)b=`
+                INSERT INTO projects (
+                  id, user_id, name, description, accent_color, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (id) DO NOTHING
+              `,e=[a.payload.id,i,a.payload.name,a.payload.description||null,a.payload.accentColor||null,a.payload.createdAt,a.payload.updatedAt];else if("update"===a.operation)b=`
+                UPDATE projects 
+                SET name = $1, description = $2, accent_color = $3, updated_at = $4
+                WHERE id = $5 AND user_id = $6
+              `,e=[a.payload.name,a.payload.description||null,a.payload.accentColor||null,a.payload.updatedAt,a.payload.id,i];else if("delete"===a.operation)b="DELETE FROM projects WHERE id = $1 AND user_id = $2",e=[a.payload.id,i];else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;case"task":if("create"===a.operation){if("free"===d){let{rows:b}=await c.query("SELECT COUNT(*) FROM tasks WHERE user_id = $1",[i]);if(parseInt(b[0].count)>=21){j.push({id:a.id,success:!1,error:"Free tier task limit reached (21 tasks)"});continue}}b=`
+                INSERT INTO tasks (
+                  id, user_id, title, completed, created_at, updated_at,
+                  project_id, parent_id, notes, due_date, priority, tags,
+                  recurring_schedule, reminder_at,
+                  meet_link, reminder_30_sent, reminder_20_sent, reminder_10_sent
+                ) VALUES (
+                  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+                  $15, $16, $17, $18
+                )
+                ON CONFLICT (id) DO NOTHING
+              `,e=[a.payload.id,i,a.payload.title,a.payload.completed,a.payload.createdAt,a.payload.updatedAt,a.payload.projectId||null,a.payload.parentId||null,a.payload.notes||null,a.payload.dueDate||null,a.payload.priority||"none",a.payload.tags||[],a.payload.recurringSchedule||"none",a.payload.reminderAt||null,a.payload.meetLink||null,a.payload.reminder_30_sent||!1,a.payload.reminder_20_sent||!1,a.payload.reminder_10_sent||!1]}else if("update"===a.operation)b=`
+                UPDATE tasks 
+                SET 
+                  title = $1, completed = $2, updated_at = $3,
+                  project_id = $4, parent_id = $5, notes = $6,
+                  due_date = $7, priority = $8, tags = $9,
+                  recurring_schedule = $10, reminder_at = $11,
+                  meet_link = $12, reminder_30_sent = $13,
+                  reminder_20_sent = $14, reminder_10_sent = $15
+                WHERE id = $16 AND user_id = $17
+              `,e=[a.payload.title,a.payload.completed,a.payload.updatedAt,a.payload.projectId||null,a.payload.parentId||null,a.payload.notes||null,a.payload.dueDate||null,a.payload.priority||"none",a.payload.tags||[],a.payload.recurringSchedule||"none",a.payload.reminderAt||null,a.payload.meetLink||null,a.payload.reminder_30_sent||!1,a.payload.reminder_20_sent||!1,a.payload.reminder_10_sent||!1,a.payload.id,i];else if("delete"===a.operation)b="DELETE FROM tasks WHERE id = $1 AND user_id = $2",e=[a.payload.id,i];else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;case"note":if("create"===a.operation){if("free"===d){let{rows:b}=await c.query("SELECT COUNT(*) FROM notes WHERE user_id = $1",[i]);if(parseInt(b[0].count)>=14){j.push({id:a.id,success:!1,error:"Free tier note limit reached"});continue}}b=`
+                INSERT INTO notes (
+                  id, user_id, title, content, created_at, updated_at,
+                  folder_id, is_pinned, is_locked, is_quick_note, deleted_at,
+                  tags
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO NOTHING
+              `,e=[a.payload.id,i,a.payload.title,a.payload.content,a.payload.createdAt,a.payload.updatedAt,a.payload.folderId||null,a.payload.isPinned||!1,a.payload.isLocked||!1,a.payload.isQuickNote||!1,a.payload.deletedAt||null,a.payload.tags||[]]}else if("update"===a.operation)b=`
+                UPDATE notes 
+                SET 
+                  title = $1, content = $2, updated_at = $3,
+                  folder_id = $4, is_pinned = $5, is_locked = $6,
+                  is_quick_note = $7, deleted_at = $8,
+                  tags = $9
+                WHERE id = $10 AND user_id = $11
+              `,e=[a.payload.title,a.payload.content,a.payload.updatedAt,a.payload.folderId||null,a.payload.isPinned||!1,a.payload.isLocked||!1,a.payload.isQuickNote||!1,a.payload.deletedAt||null,a.payload.tags||[],a.payload.id,i];else if("delete"===a.operation)b="DELETE FROM notes WHERE id = $1 AND user_id = $2",e=[a.payload.id,i];else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;case"folder":if("create"===a.operation)b=`
+                INSERT INTO folders (id, user_id, name, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (id) DO NOTHING
+              `,e=[a.payload.id,i,a.payload.name,a.payload.createdAt,a.payload.updatedAt];else if("update"===a.operation)b=`
+                UPDATE folders
+                SET name = $1, updated_at = $2
+                WHERE id = $3 AND user_id = $4
+              `,e=[a.payload.name,a.payload.updatedAt,a.payload.id,i];else if("delete"===a.operation)b="DELETE FROM folders WHERE id = $1 AND user_id = $2",e=[a.payload.id,i];else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;case"diary":if("free"===d){j.push({id:a.id,success:!1,error:"Diary not available on Free tier"});continue}if("create"===a.operation||"update"===a.operation){b=`
+                INSERT INTO diary_entries (
+                  id, user_id, entry_date, content, created_at,
+                  mood, energy, weather, location, tags, is_locked, media
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (id) DO UPDATE SET 
+                  content = $4, 
+                  created_at = $5,
+                  mood = $6,
+                  energy = $7,
+                  weather = $8,
+                  location = $9,
+                  tags = $10,
+                  is_locked = $11,
+                  media = $12
+              `;let c=a.payload.weather?JSON.stringify(a.payload.weather):null,d=a.payload.media?JSON.stringify(a.payload.media):null;e=[a.payload.id,i,a.payload.entryDate,a.payload.content,a.payload.createdAt,a.payload.mood||null,a.payload.energy||null,c,a.payload.location||null,a.payload.tags||[],a.payload.isLocked||!1,d]}else if("delete"===a.operation)b="DELETE FROM diary_entries WHERE id = $1 AND user_id = $2",e=[a.payload.id,i];else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;case"pomodoro":if("create"===a.operation){if("free"===d){let{rows:b}=await c.query("SELECT COUNT(*) FROM pomodoro_sessions WHERE user_id = $1 AND DATE_TRUNC('month', TO_TIMESTAMP(completed_at / 1000)) = DATE_TRUNC('month', NOW())",[i]);if(parseInt(b[0].count)>=21){j.push({id:a.id,success:!1,error:"Free tier Pomodoro limit reached"});continue}}b="INSERT INTO pomodoro_sessions (id, user_id, duration_minutes, completed_at, type) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING",e=[a.payload.id,i,a.payload.durationMinutes,a.payload.completedAt,a.payload.type||"work"]}else if("delete"===a.operation)throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;case"notification":if("create"===a.operation)b=`
+                INSERT INTO notifications (id, user_id, message, link, read, created_at)
+                VALUES ($1, $2, $3, $4, $5, NOW())
+                ON CONFLICT (id) DO NOTHING
+              `,e=[a.payload.id,i,a.payload.message,a.payload.link||null,a.payload.read||!1];else if("update"===a.operation)b=`
+                UPDATE notifications 
+                SET read = $1
+                WHERE id = $2 AND user_id = $3
+              `,e=[a.payload.read,a.payload.id,i];else if("delete"===a.operation)b="DELETE FROM notifications WHERE id = $1 AND user_id = $2",e=[a.payload.id,i];else throw Error(`Unsupported operation "${a.operation}" for entity "${a.entityType}"`);break;default:throw Error(`Unsupported entity type: ${a.entityType}`)}b&&await c.query(b,e),j.push({id:a.id,success:!0})}catch(b){throw console.error("Sync error for operation",a.id,b),j.push({id:a.id,success:!1,error:b.message}),Error(`Operation ${a.id} failed: ${b.message}`)}return await c.query("COMMIT"),e.NextResponse.json({results:j})}catch(a){if(c&&await c.query("ROLLBACK"),console.error("A critical sync error occurred, transaction rolled back:",a),j.some(a=>!a.success))return e.NextResponse.json({results:j},{status:400});return e.NextResponse.json({error:"Sync failed. Check server logs."},{status:500})}finally{c&&c.release()}}[g,h]=i.then?(await i)():i,d()}catch(a){d(a)}})},52963:(a,b,c)=>{"use strict";Object.defineProperty(b,"__esModule",{value:!0});var d={};Object.defineProperty(b,"default",{enumerable:!0,get:function(){return f.default}});var e=c(96434);Object.keys(e).forEach(function(a){!("default"===a||"__esModule"===a||Object.prototype.hasOwnProperty.call(d,a))&&(a in b&&b[a]===e[a]||Object.defineProperty(b,a,{enumerable:!0,get:function(){return e[a]}}))});var f=function(a,b){if(a&&a.__esModule)return a;if(null===a||"object"!=typeof a&&"function"!=typeof a)return{default:a};var c=g(b);if(c&&c.has(a))return c.get(a);var d={__proto__:null},e=Object.defineProperty&&Object.getOwnPropertyDescriptor;for(var f in a)if("default"!==f&&({}).hasOwnProperty.call(a,f)){var h=e?Object.getOwnPropertyDescriptor(a,f):null;h&&(h.get||h.set)?Object.defineProperty(d,f,h):d[f]=a[f]}return d.default=a,c&&c.set(a,d),d}(c(1093));function g(a){if("function"!=typeof WeakMap)return null;var b=new WeakMap,c=new WeakMap;return(g=function(a){return a?c:b})(a)}Object.keys(f).forEach(function(a){!("default"===a||"__esModule"===a||Object.prototype.hasOwnProperty.call(d,a))&&(a in b&&b[a]===f[a]||Object.defineProperty(b,a,{enumerable:!0,get:function(){return f[a]}}))})},55511:a=>{"use strict";a.exports=require("crypto")},55591:a=>{"use strict";a.exports=require("https")},56364:(a,b,c)=>{"use strict";c.a(a,async(a,d)=>{try{c.r(b),c.d(b,{handler:()=>x,patchFetch:()=>w,routeModule:()=>y,serverHooks:()=>B,workAsyncStorage:()=>z,workUnitAsyncStorage:()=>A});var e=c(95736),f=c(9117),g=c(4044),h=c(39326),i=c(32324),j=c(261),k=c(54290),l=c(85328),m=c(38928),n=c(46595),o=c(3421),p=c(17679),q=c(41681),r=c(63446),s=c(86439),t=c(51356),u=c(52062),v=a([u]);u=(v.then?(await v)():v)[0];let y=new e.AppRouteRouteModule({definition:{kind:f.RouteKind.APP_ROUTE,page:"/api/sync/route",pathname:"/api/sync",filename:"route",bundlePath:"app/api/sync/route"},distDir:".next",relativeProjectDir:"",resolvedPagePath:"/Users/ramanakumar/TaskGlyph/src/app/api/sync/route.ts",nextConfigOutput:"",userland:u}),{workAsyncStorage:z,workUnitAsyncStorage:A,serverHooks:B}=y;function w(){return(0,g.patchFetch)({workAsyncStorage:z,workUnitAsyncStorage:A})}async function x(a,b,c){var d;let e="/api/sync/route";"/index"===e&&(e="/");let g=await y.prepare(a,b,{srcPage:e,multiZoneDraftMode:!1});if(!g)return b.statusCode=400,b.end("Bad Request"),null==c.waitUntil||c.waitUntil.call(c,Promise.resolve()),null;let{buildId:u,params:v,nextConfig:w,isDraftMode:x,prerenderManifest:z,routerServerContext:A,isOnDemandRevalidate:B,revalidateOnlyGenerated:C,resolvedPathname:D}=g,E=(0,j.normalizeAppPath)(e),F=!!(z.dynamicRoutes[E]||z.routes[D]);if(F&&!x){let a=!!z.routes[D],b=z.dynamicRoutes[E];if(b&&!1===b.fallback&&!a)throw new s.NoFallbackError}let G=null;!F||y.isDev||x||(G=D,G="/index"===G?"/":G);let H=!0===y.isDev||!F,I=F&&!H,J=a.method||"GET",K=(0,i.getTracer)(),L=K.getActiveScopeSpan(),M={params:v,prerenderManifest:z,renderOpts:{experimental:{cacheComponents:!!w.experimental.cacheComponents,authInterrupts:!!w.experimental.authInterrupts},supportsDynamicResponse:H,incrementalCache:(0,h.getRequestMeta)(a,"incrementalCache"),cacheLifeProfiles:null==(d=w.experimental)?void 0:d.cacheLife,isRevalidate:I,waitUntil:c.waitUntil,onClose:a=>{b.on("close",a)},onAfterTaskError:void 0,onInstrumentationRequestError:(b,c,d)=>y.onRequestError(a,b,d,A)},sharedContext:{buildId:u}},N=new k.NodeNextRequest(a),O=new k.NodeNextResponse(b),P=l.NextRequestAdapter.fromNodeNextRequest(N,(0,l.signalFromNodeResponse)(b));try{let d=async c=>y.handle(P,M).finally(()=>{if(!c)return;c.setAttributes({"http.status_code":b.statusCode,"next.rsc":!1});let d=K.getRootSpanAttributes();if(!d)return;if(d.get("next.span_type")!==m.BaseServerSpan.handleRequest)return void console.warn(`Unexpected root span type '${d.get("next.span_type")}'. Please report this Next.js issue https://github.com/vercel/next.js`);let e=d.get("next.route");if(e){let a=`${J} ${e}`;c.setAttributes({"next.route":e,"http.route":e,"next.span_name":a}),c.updateName(a)}else c.updateName(`${J} ${a.url}`)}),g=async g=>{var i,j;let k=async({previousCacheEntry:f})=>{try{if(!(0,h.getRequestMeta)(a,"minimalMode")&&B&&C&&!f)return b.statusCode=404,b.setHeader("x-nextjs-cache","REVALIDATED"),b.end("This page could not be found"),null;let e=await d(g);a.fetchMetrics=M.renderOpts.fetchMetrics;let i=M.renderOpts.pendingWaitUntil;i&&c.waitUntil&&(c.waitUntil(i),i=void 0);let j=M.renderOpts.collectedTags;if(!F)return await (0,o.I)(N,O,e,M.renderOpts.pendingWaitUntil),null;{let a=await e.blob(),b=(0,p.toNodeOutgoingHttpHeaders)(e.headers);j&&(b[r.NEXT_CACHE_TAGS_HEADER]=j),!b["content-type"]&&a.type&&(b["content-type"]=a.type);let c=void 0!==M.renderOpts.collectedRevalidate&&!(M.renderOpts.collectedRevalidate>=r.INFINITE_CACHE)&&M.renderOpts.collectedRevalidate,d=void 0===M.renderOpts.collectedExpire||M.renderOpts.collectedExpire>=r.INFINITE_CACHE?void 0:M.renderOpts.collectedExpire;return{value:{kind:t.CachedRouteKind.APP_ROUTE,status:e.status,body:Buffer.from(await a.arrayBuffer()),headers:b},cacheControl:{revalidate:c,expire:d}}}}catch(b){throw(null==f?void 0:f.isStale)&&await y.onRequestError(a,b,{routerKind:"App Router",routePath:e,routeType:"route",revalidateReason:(0,n.c)({isRevalidate:I,isOnDemandRevalidate:B})},A),b}},l=await y.handleResponse({req:a,nextConfig:w,cacheKey:G,routeKind:f.RouteKind.APP_ROUTE,isFallback:!1,prerenderManifest:z,isRoutePPREnabled:!1,isOnDemandRevalidate:B,revalidateOnlyGenerated:C,responseGenerator:k,waitUntil:c.waitUntil});if(!F)return null;if((null==l||null==(i=l.value)?void 0:i.kind)!==t.CachedRouteKind.APP_ROUTE)throw Object.defineProperty(Error(`Invariant: app-route received invalid cache entry ${null==l||null==(j=l.value)?void 0:j.kind}`),"__NEXT_ERROR_CODE",{value:"E701",enumerable:!1,configurable:!0});(0,h.getRequestMeta)(a,"minimalMode")||b.setHeader("x-nextjs-cache",B?"REVALIDATED":l.isMiss?"MISS":l.isStale?"STALE":"HIT"),x&&b.setHeader("Cache-Control","private, no-cache, no-store, max-age=0, must-revalidate");let m=(0,p.fromNodeOutgoingHttpHeaders)(l.value.headers);return(0,h.getRequestMeta)(a,"minimalMode")&&F||m.delete(r.NEXT_CACHE_TAGS_HEADER),!l.cacheControl||b.getHeader("Cache-Control")||m.get("Cache-Control")||m.set("Cache-Control",(0,q.getCacheControlHeader)(l.cacheControl)),await (0,o.I)(N,O,new Response(l.value.body,{headers:m,status:l.value.status||200})),null};L?await g(L):await K.withPropagatedContext(a.headers,()=>K.trace(m.BaseServerSpan.handleRequest,{spanName:`${J} ${a.url}`,kind:i.SpanKind.SERVER,attributes:{"http.method":J,"http.target":a.url}},g))}catch(b){if(b instanceof s.NoFallbackError||await y.onRequestError(a,b,{routerKind:"App Router",routePath:E,routeType:"route",revalidateReason:(0,n.c)({isRevalidate:I,isOnDemandRevalidate:B})}),F)throw b;return await (0,o.I)(N,O,new Response(null,{status:500})),null}}d()}catch(a){d(a)}})},63033:a=>{"use strict";a.exports=require("next/dist/server/app-render/work-unit-async-storage.external.js")},64939:a=>{"use strict";a.exports=import("pg")},74075:a=>{"use strict";a.exports=require("zlib")},78335:()=>{},79428:a=>{"use strict";a.exports=require("buffer")},79551:a=>{"use strict";a.exports=require("url")},81630:a=>{"use strict";a.exports=require("http")},86439:a=>{"use strict";a.exports=require("next/dist/shared/lib/no-fallback-error.external")},94735:a=>{"use strict";a.exports=require("events")},95645:(a,b,c)=>{"use strict";c.a(a,async(a,d)=>{try{c.d(b,{N:()=>k});var e=c(75783),f=c(28120),g=c(8622),h=c(5486),i=c.n(h),j=a([g]);g=(j.then?(await j)():j)[0];let k={providers:[(0,e.A)({clientId:process.env.GOOGLE_CLIENT_ID||"",clientSecret:process.env.GOOGLE_CLIENT_SECRET||""}),(0,f.A)({name:"Email & Password",credentials:{email:{label:"Email",type:"email",placeholder:"you@example.com"},password:{label:"Password",type:"password"}},async authorize(a){if(!a?.email||!a?.password)return console.error("Credentials missing"),null;try{let{rows:b}=await g.A.query("SELECT id, email, name, password FROM users WHERE email = $1",[a.email.toLowerCase()]);if(0===b.length)return console.log("No user found with that email"),null;let c=b[0];if(!c.password)return console.log("User signed up via Google, password login not possible"),null;if(!await i().compare(a.password,c.password))return console.log("Invalid password"),null;return console.log("✅ Password validation successful for:",c.email),{id:c.id,name:c.name,email:c.email}}catch(a){return console.error("❌ DB error during authorization:",a),null}}})],session:{strategy:"jwt"},secret:process.env.NEXTAUTH_SECRET,pages:{signIn:"/auth/signin"},callbacks:{jwt:async({token:a,user:b})=>(b&&(a.id=b.id),a),session:async({session:a,token:b})=>(a.user&&b.id&&(a.user.id=b.id),a),async signIn({user:a,account:b}){if(b?.provider==="google"&&a.email){let b=a.id;try{let{rows:c}=await g.A.query("SELECT id FROM users WHERE id = $1",[b]);0===c.length&&(await g.A.query(`INSERT INTO users (id, email, name, tier)
+               VALUES ($1, $2, $3, $4)`,[b,a.email,a.name||null,"free"]),console.log("✅ New Google user created:",b))}catch(a){return console.error("❌ DB error during Google sign-in:",a),!1}}return!0}}};d()}catch(a){d(a)}})},96434:(a,b)=>{"use strict";Object.defineProperty(b,"__esModule",{value:!0})},96487:()=>{}};var b=require("../../../webpack-runtime.js");b.C(a);var c=b.X(0,[996,692,94],()=>b(b.s=56364));module.exports=c})();

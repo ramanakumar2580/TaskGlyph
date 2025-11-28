@@ -1,21 +1,19 @@
-import type { NextConfig } from "next";
+// next.config.js
 import withPWAInit from "@ducanh2912/next-pwa";
 
-// 1. Configure PWA
 const withPWA = withPWAInit({
   dest: "public",
+  disable: process.env.NODE_ENV === "development",
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  // swcMinify: true,  <-- REMOVED THIS LINE
-  disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
   },
 });
 
-// 2. Your existing configuration
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       {
@@ -28,5 +26,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// 3. Export the config wrapped with PWA
 export default withPWA(nextConfig);
