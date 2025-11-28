@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 if (!self.define) {
   let e,
     s = {};
