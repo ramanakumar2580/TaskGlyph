@@ -9,6 +9,13 @@ const withPWA = withPWAInit({
   reloadOnOnline: true,
   workboxOptions: {
     disableDevLogs: true,
+    // 👇 THIS IS THE FIX:
+    // This tells it to stop looking for the files that are causing the 404 error
+    exclude: [
+      /_buildManifest\.js$/,
+      /_ssgManifest\.js$/,
+      /_middlewareManifest\.js$/,
+    ],
   },
 });
 
