@@ -245,7 +245,6 @@ const CustomVideo = TiptapNode.create({
     return [
       "div",
       {
-        // [FIX #1.2] Tighter wrapper for video
         class:
           "media-node video-player my-4 mx-auto rounded-xl overflow-hidden shadow-sm border border-gray-200",
         "data-media-wrapper": "true",
@@ -368,7 +367,6 @@ const CustomFile = TiptapNode.create({
           { class: "flex flex-col overflow-hidden" },
           [
             "span",
-            // [FIX #1.3] Display PDF Name
             {
               class:
                 "text-sm font-medium text-gray-700 truncate block max-w-[200px]",
@@ -395,12 +393,14 @@ const CustomFile = TiptapNode.create({
   },
 });
 
-// --- LockedNoteScreen ---
+// --- Updated LockedNoteScreen ---
 function LockedNoteScreen({
   onUnlockSubmit,
+  onForgotPassword, // ✅ Prop for Forgot Password
   error,
 }: {
   onUnlockSubmit: (password: string) => void;
+  onForgotPassword: () => void;
   error: string;
 }) {
   const [password, setPassword] = useState("");
@@ -413,27 +413,29 @@ function LockedNoteScreen({
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-gray-500 p-4">
-      <Lock className="w-16 h-16 mb-4" />
-      <h2 className="text-xl font-semibold mb-2">Note Locked</h2>
-      <p className="mb-4 text-center">
-        This note is locked. Enter your notes password to view it.
+      <Lock className="w-16 h-16 mb-4 text-gray-300" />
+      <h2 className="text-xl font-semibold mb-2 text-gray-700">Note Locked</h2>
+      <p className="mb-6 text-center text-sm text-gray-400">
+        This note is protected. Enter your password to view it.
       </p>
-      <form onSubmit={handleSubmit} className="w-full max-w-sm">
-        <div className="relative mb-2">
+
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        <div className="relative">
           <input
-            id="password"
+            id="inline_unlock_password"
+            name="inline_unlock_password_field" // ✅ Unique name
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            name="lock_screen_pwd_field"
-            className="w-full border border-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            autoComplete="new-password" // ✅ Prevents autofill
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm transition-all"
+            placeholder="Enter Master Password"
             autoFocus
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-500"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
           >
             {showPassword ? (
               <EyeOff className="w-4 h-4" />
@@ -442,13 +444,30 @@ function LockedNoteScreen({
             )}
           </button>
         </div>
-        {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
+        {error && (
+          <div className="text-xs text-red-500 bg-red-50 p-2 rounded text-center">
+            {error}
+          </div>
+        )}
+
         <button
           type="submit"
-          className="w-full bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800"
+          className="w-full bg-black text-white px-4 py-3 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-all shadow-md"
         >
-          Unlock
+          Unlock Note
         </button>
+
+        {/* ✅ Forgot Password Button */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-xs text-blue-500 hover:text-blue-700 hover:underline font-medium"
+          >
+            Forgot Password?
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -512,6 +531,10 @@ export function NoteEditor({
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
   const [showVerifyPasswordModal, setShowVerifyPasswordModal] = useState(false);
+  // ✅ NEW: State for Modal Mode (Verify vs OTP)
+  const [passwordModalMode, setPasswordModalMode] = useState<"verify" | "otp">(
+    "verify"
+  );
   const [sessionPassword, setSessionPassword] = useState<string | null>(null);
 
   const [pendingAction, setPendingAction] = useState<"lock" | "unlock" | null>(
@@ -570,7 +593,6 @@ export function NoteEditor({
       TaskList,
       CustomTaskItem.configure({ nested: true }),
       Link.configure({ openOnClick: true, autolink: true }),
-      // [FIX #1.1] Image Styling (Match video size)
       Image.configure({
         inline: false,
         allowBase64: true,
@@ -600,6 +622,51 @@ export function NoteEditor({
     },
     immediatelyRender: false,
   });
+
+  // --- Load Note Logic (FIXED) ---
+  useEffect(() => {
+    // ✅ CRITICAL FIX: Reset EVERYTHING immediately when activeNoteId changes
+    setSessionPassword(null);
+    setLockError("");
+    setActiveNote(null);
+    setTitle("");
+    setOriginalTitle("");
+    setCurrentContent("");
+    setOriginalContent("");
+    editor?.commands.clearContent(); // Clear old content
+    editor?.setEditable(false);
+
+    if (!activeNoteId) {
+      isInitialLoad.current = true;
+      return;
+    }
+
+    const loadNote = async () => {
+      isInitialLoad.current = true;
+      const note = await db.notes.get(activeNoteId);
+      if (note) {
+        setActiveNote(note);
+
+        if (note.isLocked) {
+          editor?.commands.clearContent();
+          editor?.setEditable(false);
+        } else {
+          editor?.commands.setContent(note.content, { emitUpdate: false });
+          editor?.setEditable(true);
+        }
+
+        setTitle(note.title);
+        setCurrentContent(note.content);
+        setOriginalTitle(note.title);
+        setOriginalContent(note.content);
+
+        setTimeout(() => {
+          isInitialLoad.current = false;
+        }, 500);
+      }
+    };
+    loadNote();
+  }, [activeNoteId, editor]);
 
   // --- Media Deletion Logic ---
 
@@ -794,48 +861,6 @@ export function NoteEditor({
     };
   }, []);
 
-  useEffect(() => {
-    setSessionPassword(null);
-    setLockError("");
-
-    if (!activeNoteId) {
-      editor?.setEditable(false);
-      editor?.commands.clearContent();
-      setTitle("");
-      setOriginalTitle("");
-      setCurrentContent("");
-      setOriginalContent("");
-      setActiveNote(null);
-      isInitialLoad.current = true;
-      return;
-    }
-    const loadNote = async () => {
-      isInitialLoad.current = true;
-      const note = await db.notes.get(activeNoteId);
-      if (note) {
-        setActiveNote(note);
-
-        if (note.isLocked) {
-          editor?.commands.clearContent();
-          editor?.setEditable(false);
-        } else {
-          editor?.commands.setContent(note.content, { emitUpdate: false });
-          editor?.setEditable(true);
-        }
-
-        setTitle(note.title);
-        setCurrentContent(note.content);
-        setOriginalTitle(note.title);
-        setOriginalContent(note.content);
-
-        setTimeout(() => {
-          isInitialLoad.current = false;
-        }, 500);
-      }
-    };
-    loadNote();
-  }, [activeNoteId, editor]);
-
   const hasChanges = useMemo(() => {
     if (!activeNoteId || !activeNote) return false;
     if (activeNote.isLocked && !sessionPassword) return false;
@@ -923,7 +948,6 @@ export function NoteEditor({
         ) {
           editor.chain().focus().setAudio({ src: url }).run();
         } else {
-          // [FIX #1.3] Pass file name to CustomFile extension
           editor.chain().focus().setFile({ src: url, name: file.name }).run();
         }
       }
@@ -994,6 +1018,7 @@ export function NoteEditor({
     setLockError("");
     if (activeNote.isLocked) {
       setPendingAction("unlock");
+      setPasswordModalMode("verify"); // Default to verify
       setShowVerifyPasswordModal(true);
     } else {
       setPendingAction("lock");
@@ -1012,6 +1037,12 @@ export function NoteEditor({
       return;
     }
     try {
+      // ✅ FIX: Check Offline before API
+      if (!navigator.onLine) {
+        setLockError("You are offline. Cannot unlock note.");
+        return;
+      }
+
       const res = await fetch("/api/notes-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1155,6 +1186,11 @@ export function NoteEditor({
         ) : activeNote.isLocked && !sessionPassword ? (
           <LockedNoteScreen
             onUnlockSubmit={handleUnlockSubmit}
+            onForgotPassword={() => {
+              // ✅ Open VerifyModal in 'otp' mode
+              setPasswordModalMode("otp");
+              setShowVerifyPasswordModal(true);
+            }}
             error={lockError}
           />
         ) : (
@@ -1231,9 +1267,11 @@ export function NoteEditor({
         )}
         {showVerifyPasswordModal && (
           <VerifyNotePasswordModal
+            initialMode={passwordModalMode} // ✅ Pass correct mode
             onClose={() => {
               setShowVerifyPasswordModal(false);
               setPendingAction(null);
+              setPasswordModalMode("verify"); // Reset for next time
             }}
             onSuccess={onVerifySuccess}
           />

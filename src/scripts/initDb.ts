@@ -170,8 +170,7 @@ async function createTables() {
       );
     `);
 
-    // ✅ 10. PAYMENTS TABLE (NEW)
-    // Stores Razorpay transaction history
+    // 10. PAYMENTS TABLE
     await client.query(`
       CREATE TABLE IF NOT EXISTS payments (
         id TEXT PRIMARY KEY, -- razorpay_payment_id
@@ -195,6 +194,15 @@ async function createTables() {
       await client.query(
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS notes_password_hash TEXT;`
       );
+
+      // ✅ [NEW] Added columns for Password Reset (Forgot Password)
+      await client.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS notes_reset_code TEXT;`
+      );
+      await client.query(
+        `ALTER TABLE users ADD COLUMN IF NOT EXISTS notes_reset_expiry BIGINT;`
+      );
+
       // Ensure tier column exists for existing users
       await client.query(
         `ALTER TABLE users ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'free';`
