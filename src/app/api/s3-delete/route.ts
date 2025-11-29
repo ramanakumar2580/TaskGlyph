@@ -4,11 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 
 // 1. Robust Environment Variable Loading
-const REGION =
-  process.env.AWS_REGION ||
-  process.env.AWS_S3_REGION ||
-  process.env.NEXT_PUBLIC_AWS_S3_REGION ||
-  "ap-south-2";
+const REGION = "ap-south-2";
 const BUCKET =
   process.env.AWS_BUCKET_NAME ||
   process.env.AWS_S3_BUCKET_NAME ||
