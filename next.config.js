@@ -17,9 +17,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com",
+        hostname: "lh3.googleusercontent.com", // Google Profile Pics
         port: "",
         pathname: "/a/**",
+      },
+      // ✅ ADD THIS BLOCK FOR AWS S3
+      {
+        protocol: "https",
+        hostname: "**.amazonaws.com", // Allows all AWS S3 regions/buckets
       },
     ],
   },
