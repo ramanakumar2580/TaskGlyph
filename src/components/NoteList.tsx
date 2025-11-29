@@ -115,7 +115,8 @@ function NoteListItem({
       <ContextMenu.Trigger>
         <div
           onClick={onClick}
-          className={`relative p-4 border-b border-gray-100 cursor-pointer group transition-all duration-200 ${
+          // ✅ FIX: Added 'select-none' to prevent blue text highlighting
+          className={`relative p-4 border-b border-gray-100 cursor-pointer group transition-all duration-200 select-none ${
             isActive
               ? "bg-blue-50 border-l-4 border-l-blue-500"
               : "hover:bg-gray-50 border-l-4 border-l-transparent"
@@ -160,7 +161,6 @@ function NoteListItem({
         </div>
       </ContextMenu.Trigger>
 
-      {/* ✅ FIX: Wrapped in Portal to float above everything */}
       <ContextMenu.Portal>
         <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
           <ContextMenu.Item
@@ -241,7 +241,8 @@ function NoteGalleryItem({
       <ContextMenu.Trigger>
         <div
           onClick={onClick}
-          className={`relative h-40 flex flex-col p-4 border rounded-xl cursor-pointer group transition-all duration-200
+          // ✅ FIX: Added 'select-none'
+          className={`relative h-40 flex flex-col p-4 border rounded-xl cursor-pointer group transition-all duration-200 select-none
             ${
               isActive
                 ? "bg-blue-50 border-blue-200 shadow-md ring-1 ring-blue-100"
@@ -283,7 +284,6 @@ function NoteGalleryItem({
         </div>
       </ContextMenu.Trigger>
 
-      {/* ✅ FIX: Wrapped in Portal here too */}
       <ContextMenu.Portal>
         <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
           <ContextMenu.Item
@@ -336,7 +336,7 @@ function TrashListItem({
     : "Recently";
 
   return (
-    <div className="relative p-4 border-b border-gray-200 group bg-gray-50/50 hover:bg-gray-50 transition-colors">
+    <div className="relative p-4 border-b border-gray-200 group bg-gray-50/50 hover:bg-gray-50 transition-colors select-none">
       <div className="flex justify-between items-start mb-1">
         <h3 className="font-semibold text-sm truncate pr-6 text-gray-600 line-through opacity-70">
           {title}

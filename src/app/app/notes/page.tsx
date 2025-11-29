@@ -31,8 +31,8 @@ export default function NotesPage() {
   // Custom Resize Handle Component for better UX
   const ResizeHandle = ({ className = "" }: { className?: string }) => (
     <PanelResizeHandle
-      // ✅ FIX: Increased to z-30 so it sits ABOVE the panels (since List is now z-20)
-      className={`w-[2px] bg-transparent hover:bg-blue-400 transition-all duration-300 hover:w-[3px] cursor-col-resize relative group outline-none z-30 ${className}`}
+      // ✅ CHANGED: z-10 is safer. Higher z-indices inside stacking contexts cause modal issues.
+      className={`w-[2px] bg-transparent hover:bg-blue-400 transition-all duration-300 hover:w-[3px] cursor-col-resize relative group outline-none z-10 ${className}`}
     >
       {/* Visual Indicator line inside the grab area */}
       <div className="absolute inset-y-0 left-1/2 w-[1px] bg-gray-200 group-hover:bg-blue-400 transition-colors h-full" />
@@ -40,6 +40,9 @@ export default function NotesPage() {
   );
 
   return (
+    // ✅ FIX: Reduced z-index to 0 or 10.
+    // The Navbar is z-[100]. Modals are usually z-50.
+    // This container must be LOWER than the modal z-index.
     <div className="flex overflow-hidden bg-gray-50/30 text-black fixed top-[60px] left-0 right-0 bottom-0 z-0">
       <PanelGroup direction="horizontal" className="w-full h-full">
         {/* Pane 1: Folder Sidebar */}
@@ -49,8 +52,7 @@ export default function NotesPage() {
           defaultSize={18}
           minSize={15}
           maxSize={25}
-          // ✅ FIX: Added z-10 relative
-          className="h-full bg-gray-50/50 border-r border-gray-100 z-10 relative"
+          className="h-full bg-gray-50/50 border-r border-gray-100"
           onCollapse={() => setIsSidebarCollapsed(true)}
           onExpand={() => setIsSidebarCollapsed(false)}
         >
@@ -70,9 +72,7 @@ export default function NotesPage() {
           defaultSize={25}
           minSize={20}
           maxSize={35}
-          // ✅ FIX: Added z-20 relative + overflow-visible
-          // This ensures the dropdown menu floats ON TOP of the Editor panel
-          className="h-full bg-white/80 backdrop-blur-sm z-20 relative overflow-visible"
+          className="h-full bg-white/80 backdrop-blur-sm"
         >
           <NoteList
             isSidebarCollapsed={isSidebarCollapsed}
@@ -90,8 +90,9 @@ export default function NotesPage() {
         <Panel
           defaultSize={57}
           minSize={30}
-          // ✅ FIX: Lowered to z-0 so it sits BEHIND the Note List menu
-          className="h-full bg-white shadow-[-5px_0_15px_-3px_rgba(0,0,0,0.02)] z-0 relative"
+          // ✅ FIX: Removed z-index here or kept it low.
+          // If this panel has a high z-index, it traps the modal visuals.
+          className="h-full bg-white shadow-[-5px_0_15px_-3px_rgba(0,0,0,0.02)] relative"
         >
           <NoteEditor
             activeNoteId={activeNoteId}

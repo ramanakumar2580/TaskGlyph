@@ -1241,21 +1241,27 @@ export function NoteEditor({
           </>
         )}
 
-        {/* Modals */}
-        {isLinkModalOpen && (
-          <AddLinkModal
-            editor={editor}
-            onClose={() => setIsLinkModalOpen(false)}
-            initialName={initialLinkName}
-            initialUrl={initialLinkUrl}
-          />
-        )}
-        {isAudioModalOpen && (
-          <AudioRecorder
-            onClose={() => setIsAudioModalOpen(false)}
-            onAdd={(file) => handleFileUpload([file])}
-          />
-        )}
+        {/* ✅ FIX: Use Portals to break Modals out of the Editor Panel */}
+        {isLinkModalOpen &&
+          createPortal(
+            <AddLinkModal
+              editor={editor}
+              onClose={() => setIsLinkModalOpen(false)}
+              initialName={initialLinkName}
+              initialUrl={initialLinkUrl}
+            />,
+            document.body
+          )}
+
+        {isAudioModalOpen &&
+          createPortal(
+            <AudioRecorder
+              onClose={() => setIsAudioModalOpen(false)}
+              onAdd={(file) => handleFileUpload([file])}
+            />,
+            document.body
+          )}
+
         {showCreatePasswordModal && (
           <CreateNotePasswordModal
             onClose={() => {

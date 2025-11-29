@@ -1,5 +1,10 @@
 {
   "pages": {
+    "/api/auth/[...nextauth]/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/auth/[...nextauth]/route.js"
+    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -11,37 +16,32 @@
       "static/chunks/main-app.js",
       "static/chunks/app/auth/signin/page.js"
     ],
-    "/api/auth/[...nextauth]/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/auth/[...nextauth]/route.js"
-    ],
-    "/api/sync/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/sync/route.js"
-    ],
     "/app/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/app/layout.css",
       "static/chunks/app/app/layout.js"
     ],
-    "/app/page": [
+    "/app/notes/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/app/page.js"
+      "static/css/app/app/notes/page.css",
+      "static/chunks/app/app/notes/page.js"
     ],
     "/api/user/tier/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/user/tier/route.js"
     ],
-    "/app/notes/page": [
+    "/api/sync/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/app/notes/page.css",
-      "static/chunks/app/app/notes/page.js"
+      "static/chunks/app/api/sync/route.js"
+    ],
+    "/api/s3-upload/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/s3-upload/route.js"
     ]
   }
 }
