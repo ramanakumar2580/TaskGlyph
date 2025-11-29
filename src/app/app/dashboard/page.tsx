@@ -602,7 +602,7 @@ export default function DashboardPage() {
         animate="visible"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]"
       >
-        {/* ✅ 1. AI INSIGHTS CARD (UPDATED: row-span-4 to increase height) */}
+        {/* ✅ 1. AI INSIGHTS CARD */}
         <motion.div
           variants={itemVariants}
           className="col-span-1 md:col-span-2 lg:col-span-2 row-span-4"
@@ -795,7 +795,8 @@ export default function DashboardPage() {
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
             Balance
           </h3>
-          <div className="flex-1 relative">
+          {/* FIX: Explicit height for PieChart container */}
+          <div className="h-[110px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -822,8 +823,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.div>
-
-        {/* ✅ REMOVED Horizon & Quick Capture from here */}
 
         <motion.div
           variants={itemVariants}
@@ -880,7 +879,8 @@ export default function DashboardPage() {
             <TrendingUp size={20} className="text-teal-500" /> Mood & Focus
             Correlation
           </h3>
-          <div className="flex-1 w-full min-h-0">
+          {/* FIX: Explicit height for ComposedChart container */}
+          <div className="w-full h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={moodVsFocusData}>
                 <defs>
@@ -946,7 +946,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-          <div className="flex-1 min-h-0">
+          {/* FIX: Explicit height for RadarChart container */}
+          <div className="w-full h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={peakData}>
                 <PolarGrid stroke="#e5e7eb" />
