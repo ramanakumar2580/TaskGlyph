@@ -115,7 +115,6 @@ function NoteListItem({
       <ContextMenu.Trigger>
         <div
           onClick={onClick}
-          // ✅ FIX: Added 'select-none' to prevent blue text highlighting
           className={`relative p-4 border-b border-gray-100 cursor-pointer group transition-all duration-200 select-none ${
             isActive
               ? "bg-blue-50 border-l-4 border-l-blue-500"
@@ -241,7 +240,6 @@ function NoteGalleryItem({
       <ContextMenu.Trigger>
         <div
           onClick={onClick}
-          // ✅ FIX: Added 'select-none'
           className={`relative h-40 flex flex-col p-4 border rounded-xl cursor-pointer group transition-all duration-200 select-none
             ${
               isActive
@@ -412,6 +410,7 @@ function EmptyTrashModal({
   );
 }
 
+// ✅ Helper for Tooltips (Updated sideOffset to push it slightly below)
 const TooltipButton = ({
   children,
   label,
@@ -424,8 +423,9 @@ const TooltipButton = ({
       <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
+          side="bottom"
           className="bg-gray-900 text-white px-2 py-1 rounded text-[10px] font-medium shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100"
-          sideOffset={5}
+          sideOffset={5} // Pushes tooltip away from button
         >
           {label}
           <Tooltip.Arrow className="fill-gray-900" />
@@ -663,97 +663,96 @@ export function NoteList({
             </TooltipButton>
           )}
 
-          {!isTrashView && (
-            <DropdownMenu.Root>
-              <TooltipButton label="View Options">
-                <DropdownMenu.Trigger asChild>
-                  <button
-                    type="button"
-                    className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-md transition-colors"
-                  >
-                    <MoreHorizontal className="w-5 h-5" strokeWidth={2} />
-                  </button>
-                </DropdownMenu.Trigger>
-              </TooltipButton>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="bg-white rounded-lg shadow-xl p-1.5 z-50 border border-gray-100 w-48 animate-in fade-in zoom-in-95 duration-100"
-                  sideOffset={5}
-                  align="end"
+          {/* ✅ 3-Dots Menu for ALL Views (Trash, Quick Notes, etc.) */}
+          <DropdownMenu.Root>
+            <TooltipButton label="View Options">
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-md transition-colors"
                 >
-                  <DropdownMenu.Item
-                    onSelect={() => setViewType("gallery")}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
-                  >
-                    <GalleryVertical className="w-4 h-4" /> Gallery{" "}
-                    {viewType === "gallery" && (
-                      <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
-                    )}
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onSelect={() => setViewType("list")}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
-                  >
-                    <List className="w-4 h-4" /> List{" "}
-                    {viewType === "list" && (
-                      <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
-                    )}
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
+                  <MoreHorizontal className="w-5 h-5" strokeWidth={2} />
+                </button>
+              </DropdownMenu.Trigger>
+            </TooltipButton>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="bg-white rounded-lg shadow-xl p-1.5 z-50 border border-gray-100 w-48 animate-in fade-in zoom-in-95 duration-100"
+                sideOffset={5}
+                align="end"
+              >
+                <DropdownMenu.Item
+                  onSelect={() => setViewType("gallery")}
+                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                >
+                  <GalleryVertical className="w-4 h-4" /> Gallery{" "}
+                  {viewType === "gallery" && (
+                    <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                  )}
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  onSelect={() => setViewType("list")}
+                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                >
+                  <List className="w-4 h-4" /> List{" "}
+                  {viewType === "list" && (
+                    <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                  )}
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
 
-                  <DropdownMenu.Sub>
-                    <DropdownMenu.SubTrigger className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700">
-                      <SortAsc className="w-4 h-4" /> Sort by...
-                    </DropdownMenu.SubTrigger>
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.SubContent
-                        className="bg-white rounded-lg shadow-xl p-1.5 z-50 border border-gray-100 w-48 animate-in fade-in zoom-in-95 duration-100"
-                        sideOffset={5}
+                <DropdownMenu.Sub>
+                  <DropdownMenu.SubTrigger className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700">
+                    <SortAsc className="w-4 h-4" /> Sort by...
+                  </DropdownMenu.SubTrigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.SubContent
+                      className="bg-white rounded-lg shadow-xl p-1.5 z-50 border border-gray-100 w-48 animate-in fade-in zoom-in-95 duration-100"
+                      sideOffset={5}
+                    >
+                      <DropdownMenu.Item
+                        onSelect={() => setSortOrder("updatedAt")}
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
                       >
-                        <DropdownMenu.Item
-                          onSelect={() => setSortOrder("updatedAt")}
-                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
-                        >
-                          Date Edited
-                          {sortOrder === "updatedAt" && (
-                            <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
-                          )}
-                        </DropdownMenu.Item>
-                        <DropdownMenu.Item
-                          onSelect={() => setSortOrder("createdAt")}
-                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
-                        >
-                          Date Created
-                          {sortOrder === "createdAt" && (
-                            <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
-                          )}
-                        </DropdownMenu.Item>
-                        <DropdownMenu.Item
-                          onSelect={() => setSortOrder("title")}
-                          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
-                        >
-                          Title
-                          {sortOrder === "title" && (
-                            <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
-                          )}
-                        </DropdownMenu.Item>
-                      </DropdownMenu.SubContent>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Sub>
+                        Date Edited
+                        {sortOrder === "updatedAt" && (
+                          <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                        )}
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        onSelect={() => setSortOrder("createdAt")}
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                      >
+                        Date Created
+                        {sortOrder === "createdAt" && (
+                          <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                        )}
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        onSelect={() => setSortOrder("title")}
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                      >
+                        Title
+                        {sortOrder === "title" && (
+                          <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                        )}
+                      </DropdownMenu.Item>
+                    </DropdownMenu.SubContent>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Sub>
 
-                  <DropdownMenu.Item
-                    onSelect={() => setIsGrouped(!isGrouped)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
-                  >
-                    <CalendarDays className="w-4 h-4" /> Group by Date{" "}
-                    {isGrouped && (
-                      <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
-                    )}
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-          )}
+                <DropdownMenu.Item
+                  onSelect={() => setIsGrouped(!isGrouped)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-50 outline-none text-gray-700"
+                >
+                  <CalendarDays className="w-4 h-4" /> Group by Date{" "}
+                  {isGrouped && (
+                    <Check className="w-3.5 h-3.5 ml-auto text-blue-600" />
+                  )}
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </div>
       </div>
 

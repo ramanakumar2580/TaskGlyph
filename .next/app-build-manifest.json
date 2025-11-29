@@ -42,6 +42,21 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/s3-upload/route.js"
+    ],
+    "/api/s3-delete/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/s3-delete/route.js"
+    ],
+    "/api/notes-password/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/notes-password/route.js"
+    ],
+    "/app/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/page.js"
     ]
   }
 }

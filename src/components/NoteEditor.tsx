@@ -49,8 +49,6 @@ import {
   Loader2,
   Save,
   Lock,
-  Eye,
-  EyeOff,
   Search as SearchIcon,
   FileText,
   Trash2,
@@ -315,69 +313,78 @@ const CustomFile = TiptapNode.create({
     };
   },
   parseHTML() {
-    return [{ tag: "div[data-file-attachment]" }];
+    return [
+      {
+        tag: "div[data-file-attachment]",
+        getAttrs: (dom: any) => ({
+          name: dom.getAttribute("data-name") || "Attachment",
+          src:
+            dom.getAttribute("data-src") ||
+            dom.querySelector("a")?.getAttribute("href"),
+        }),
+      },
+    ];
   },
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
       {
-        class: "media-node file-attachment my-3 mx-auto max-w-sm",
+        class:
+          "media-node file-attachment my-3 mx-auto max-w-sm flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group relative",
         "data-media-wrapper": "true",
         "data-file-attachment": "true",
+        "data-name": HTMLAttributes.name,
+        "data-src": HTMLAttributes.src,
+        contenteditable: "false",
       },
       [
-        "a",
+        "div",
         {
-          href: HTMLAttributes.src,
-          target: "_blank",
-          rel: "noopener noreferrer",
           class:
-            "flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 transition-all no-underline group cursor-pointer",
+            "p-2 bg-blue-50 rounded-full text-blue-600 group-hover:bg-blue-100 transition-colors flex-shrink-0",
         },
         [
-          "div",
+          "svg",
           {
-            class:
-              "p-2 bg-blue-50 rounded-full text-blue-600 group-hover:bg-blue-100 transition-colors",
+            xmlns: "http://www.w3.org/2000/svg",
+            width: "20",
+            height: "20",
+            viewBox: "0 0 24 24",
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "2",
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
           },
           [
-            "svg",
+            "path",
             {
-              xmlns: "http://www.w3.org/2000/svg",
-              width: "20",
-              height: "20",
-              viewBox: "0 0 24 24",
-              fill: "none",
-              stroke: "currentColor",
-              "stroke-width": "2",
-              "stroke-linecap": "round",
-              "stroke-linejoin": "round",
+              d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z",
             },
-            [
-              "path",
-              {
-                d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z",
-              },
-            ],
-            ["polyline", { points: "14 2 14 8 20 8" }],
           ],
+          ["polyline", { points: "14 2 14 8 20 8" }],
+        ],
+      ],
+      [
+        "div",
+        { class: "flex flex-col overflow-hidden flex-1 min-w-0" },
+        [
+          "a",
+          {
+            href: HTMLAttributes.src,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            class:
+              "text-sm font-medium text-gray-700 truncate block hover:text-blue-600 hover:underline z-20 relative",
+            onclick: "event.stopPropagation();",
+            title: HTMLAttributes.name,
+          },
+          HTMLAttributes.name,
         ],
         [
-          "div",
-          { class: "flex flex-col overflow-hidden" },
-          [
-            "span",
-            {
-              class:
-                "text-sm font-medium text-gray-700 truncate block max-w-[200px]",
-            },
-            HTMLAttributes.name,
-          ],
-          [
-            "span",
-            { class: "text-[10px] text-gray-400 uppercase" },
-            "Document",
-          ],
+          "span",
+          { class: "text-[10px] text-gray-400 uppercase mt-0.5" },
+          "Document",
         ],
       ],
     ];
@@ -393,82 +400,31 @@ const CustomFile = TiptapNode.create({
   },
 });
 
-// --- Updated LockedNoteScreen ---
+// ✅ [NEW] Stylish Locked Screen Component
 function LockedNoteScreen({
-  onUnlockSubmit,
-  onForgotPassword, // ✅ Prop for Forgot Password
-  error,
+  onRequestUnlock,
 }: {
-  onUnlockSubmit: (password: string) => void;
-  onForgotPassword: () => void;
-  error: string;
+  onRequestUnlock: () => void;
 }) {
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUnlockSubmit(password);
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center h-full text-gray-500 p-4">
-      <Lock className="w-16 h-16 mb-4 text-gray-300" />
-      <h2 className="text-xl font-semibold mb-2 text-gray-700">Note Locked</h2>
-      <p className="mb-6 text-center text-sm text-gray-400">
-        This note is protected. Enter your password to view it.
+    <div className="flex flex-col items-center justify-center h-full bg-gray-50/30 p-8 text-center animate-in fade-in duration-300">
+      <div className="bg-white p-6 rounded-full shadow-sm border border-gray-100 mb-6">
+        <Lock className="w-12 h-12 text-gray-400" strokeWidth={1.5} />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2 tracking-tight font-serif">
+        Protected Note
+      </h2>
+      <p className="text-sm text-gray-500 mb-8 max-w-xs leading-relaxed">
+        This content is locked with your master password.
       </p>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <div className="relative">
-          <input
-            id="inline_unlock_password"
-            name="inline_unlock_password_field" // ✅ Unique name
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password" // ✅ Prevents autofill
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm transition-all"
-            placeholder="Enter Master Password"
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? (
-              <EyeOff className="w-4 h-4" />
-            ) : (
-              <Eye className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-
-        {error && (
-          <div className="text-xs text-red-500 bg-red-50 p-2 rounded text-center">
-            {error}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className="w-full bg-black text-white px-4 py-3 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-all shadow-md"
-        >
-          Unlock Note
-        </button>
-
-        {/* ✅ Forgot Password Button */}
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={onForgotPassword}
-            className="text-xs text-blue-500 hover:text-blue-700 hover:underline font-medium"
-          >
-            Forgot Password?
-          </button>
-        </div>
-      </form>
+      <button
+        onClick={onRequestUnlock}
+        className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+      >
+        <Lock className="w-4 h-4" />
+        Tap to Unlock
+      </button>
     </div>
   );
 }
@@ -531,7 +487,6 @@ export function NoteEditor({
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [showCreatePasswordModal, setShowCreatePasswordModal] = useState(false);
   const [showVerifyPasswordModal, setShowVerifyPasswordModal] = useState(false);
-  // ✅ NEW: State for Modal Mode (Verify vs OTP)
   const [passwordModalMode, setPasswordModalMode] = useState<"verify" | "otp">(
     "verify"
   );
@@ -540,7 +495,7 @@ export function NoteEditor({
   const [pendingAction, setPendingAction] = useState<"lock" | "unlock" | null>(
     null
   );
-  const [lockError, setLockError] = useState("");
+  const [, setLockError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const docInputRef = useRef<HTMLInputElement | null>(null);
@@ -623,9 +578,8 @@ export function NoteEditor({
     immediatelyRender: false,
   });
 
-  // --- Load Note Logic (FIXED) ---
+  // --- Load Note Logic ---
   useEffect(() => {
-    // ✅ CRITICAL FIX: Reset EVERYTHING immediately when activeNoteId changes
     setSessionPassword(null);
     setLockError("");
     setActiveNote(null);
@@ -633,7 +587,7 @@ export function NoteEditor({
     setOriginalTitle("");
     setCurrentContent("");
     setOriginalContent("");
-    editor?.commands.clearContent(); // Clear old content
+    editor?.commands.clearContent();
     editor?.setEditable(false);
 
     if (!activeNoteId) {
@@ -647,10 +601,12 @@ export function NoteEditor({
       if (note) {
         setActiveNote(note);
 
-        if (note.isLocked) {
+        // Check if note is locked AND we don't have a valid password session
+        if (note.isLocked && !sessionPassword) {
           editor?.commands.clearContent();
           editor?.setEditable(false);
         } else {
+          // Unlocked or Password Provided
           editor?.commands.setContent(note.content, { emitUpdate: false });
           editor?.setEditable(true);
         }
@@ -666,10 +622,9 @@ export function NoteEditor({
       }
     };
     loadNote();
-  }, [activeNoteId, editor]);
+  }, [activeNoteId, editor, sessionPassword]); // Dependency on sessionPassword ensures re-render
 
   // --- Media Deletion Logic ---
-
   useEffect(() => {
     if (typeof document !== "undefined") {
       const container = document.createElement("div");
@@ -721,7 +676,6 @@ export function NoteEditor({
     const domNode = view.nodeDOM(from) as HTMLElement;
     let targetElement = domNode;
 
-    // Handle wrappers
     if (
       node.type.name === "audio" ||
       node.type.name === "video" ||
@@ -787,7 +741,6 @@ export function NoteEditor({
           const isReClicking = lastSelectedPos.current === from;
 
           if (isReClicking) {
-            // Toggle Off
             const node = editor.state.doc.nodeAt(from);
             if (node) {
               const afterPos = from + node.nodeSize;
@@ -796,7 +749,6 @@ export function NoteEditor({
               lastSelectedPos.current = null;
             }
           } else {
-            // Select
             updateBubble();
             lastSelectedPos.current = from;
           }
@@ -1016,45 +968,26 @@ export function NoteEditor({
   const handleToggleLock = () => {
     if (!activeNote) return;
     setLockError("");
+
+    // If Locked: Ask to Unlock
     if (activeNote.isLocked) {
-      setPendingAction("unlock");
-      setPasswordModalMode("verify"); // Default to verify
-      setShowVerifyPasswordModal(true);
+      // Only if we don't have the session password yet
+      if (!sessionPassword) {
+        setPendingAction("unlock");
+        setPasswordModalMode("verify");
+        setShowVerifyPasswordModal(true);
+      } else {
+        // We have session, so user wants to completely remove lock
+        performUnlock();
+      }
     } else {
+      // If Unlocked: Lock it
       setPendingAction("lock");
       if (metadata?.hasNotesPassword) {
         performLock();
       } else {
         setShowCreatePasswordModal(true);
       }
-    }
-  };
-
-  const handleUnlockSubmit = async (password: string) => {
-    setLockError("");
-    if (!password) {
-      setLockError("Password cannot be empty.");
-      return;
-    }
-    try {
-      // ✅ FIX: Check Offline before API
-      if (!navigator.onLine) {
-        setLockError("You are offline. Cannot unlock note.");
-        return;
-      }
-
-      const res = await fetch("/api/notes-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify", password }),
-      });
-      if (!res.ok) {
-        setLockError("Incorrect password. Please try again.");
-      } else {
-        setSessionPassword(password);
-      }
-    } catch {
-      setLockError("An error occurred. Please try again.");
     }
   };
 
@@ -1184,14 +1117,14 @@ export function NoteEditor({
             Select a note to start editing.
           </div>
         ) : activeNote.isLocked && !sessionPassword ? (
+          // ✅ [UPDATED] Stylish Placeholder
           <LockedNoteScreen
-            onUnlockSubmit={handleUnlockSubmit}
-            onForgotPassword={() => {
-              // ✅ Open VerifyModal in 'otp' mode
-              setPasswordModalMode("otp");
+            onRequestUnlock={() => {
+              setLockError("");
+              setPasswordModalMode("verify");
               setShowVerifyPasswordModal(true);
+              setPendingAction("unlock");
             }}
-            error={lockError}
           />
         ) : (
           <>
@@ -1241,7 +1174,7 @@ export function NoteEditor({
           </>
         )}
 
-        {/* ✅ FIX: Use Portals to break Modals out of the Editor Panel */}
+        {/* Modals */}
         {isLinkModalOpen &&
           createPortal(
             <AddLinkModal
@@ -1273,11 +1206,11 @@ export function NoteEditor({
         )}
         {showVerifyPasswordModal && (
           <VerifyNotePasswordModal
-            initialMode={passwordModalMode} // ✅ Pass correct mode
+            initialMode={passwordModalMode}
             onClose={() => {
               setShowVerifyPasswordModal(false);
               setPendingAction(null);
-              setPasswordModalMode("verify"); // Reset for next time
+              setPasswordModalMode("verify");
             }}
             onSuccess={onVerifySuccess}
           />

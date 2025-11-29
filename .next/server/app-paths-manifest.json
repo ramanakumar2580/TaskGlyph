@@ -1,7 +1,6 @@
 {
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/s3-upload/route": "app/api/s3-upload/route.js",
-  "/api/user/tier/route": "app/api/user/tier/route.js",
   "/api/sync/route": "app/api/sync/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/user/tier/route": "app/api/user/tier/route.js",
   "/app/notes/page": "app/app/notes/page.js"
 }
