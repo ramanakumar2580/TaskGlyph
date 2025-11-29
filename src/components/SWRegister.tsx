@@ -1,24 +1,29 @@
 "use client";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { startBackgroundSync } from "@/lib/sync/syncService";
 
 export default function SWRegister() {
+  const { data: session } = useSession();
+
   useEffect(() => {
-    // Check if the browser supports Service Workers
+    // Register Service Worker
     if ("serviceWorker" in navigator) {
-      // Register the file we built
       navigator.serviceWorker
         .register("/sw.js")
-        .then((registration) => {
-          console.log(
-            "✅ Service Worker Registered with scope:",
-            registration.scope
-          );
-        })
-        .catch((err) => {
-          console.error("❌ Service Worker Registration Failed:", err);
-        });
+        .then((reg) => console.log("✅ SW Registered", reg.scope))
+        .catch((err) => console.error("❌ SW Failed", err));
     }
   }, []);
 
-  return null; // This component renders nothing, it just runs logic
+  // ✅ Start Sync ONLY when user is logged in
+  useEffect(() => {
+    if (session?.user?.id) {
+      // Pass the User ID so we can protect the data!
+      const cleanup = startBackgroundSync(session.user.id);
+      return cleanup;
+    }
+  }, [session?.user?.id]); // Re-run if user changes
+
+  return null;
 }
