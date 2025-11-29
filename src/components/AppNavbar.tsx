@@ -17,12 +17,12 @@ import {
   XMarkIcon,
   ArrowRightEndOnRectangleIcon,
   SparklesIcon,
-  XCircleIcon, // Icon for Cancel
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useTier } from "@/lib/db/useTier";
 import { usePathname } from "next/navigation";
 import NotificationBell from "./NotificationBell";
-import db from "@/lib/db/clientDb"; // ✅ Import DB for local updates
+import db from "@/lib/db/clientDb";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -60,7 +60,7 @@ export default function AppNavbar() {
     }
   };
 
-  // 🔥 HANDLE CANCEL SUBSCRIPTION LOGIC
+  // HANDLE CANCEL SUBSCRIPTION LOGIC
   const handleCancelSubscription = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to cancel your plan? You will lose premium benefits immediately, and a refund will be initiated."
@@ -108,7 +108,8 @@ export default function AppNavbar() {
   return (
     <Disclosure
       as="nav"
-      className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40"
+      // ✅ FIX: Changed z-40 to z-[100] so it stays above the Note Editor
+      className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-[100]"
     >
       {({ open }) => (
         <>
@@ -228,7 +229,7 @@ export default function AppNavbar() {
                         </Menu.Item>
                       )}
 
-                      {/* 🔥 CANCEL SUBSCRIPTION (If Paid) */}
+                      {/* CANCEL SUBSCRIPTION (If Paid) */}
                       {currentTier !== "free" && (
                         <Menu.Item>
                           {({ active }) => (
@@ -358,7 +359,7 @@ export default function AppNavbar() {
                   </Disclosure.Button>
                 )}
 
-                {/* 🔥 MOBILE CANCEL BUTTON */}
+                {/* MOBILE CANCEL BUTTON */}
                 {currentTier !== "free" && (
                   <Disclosure.Button
                     as="button"

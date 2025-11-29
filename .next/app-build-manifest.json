@@ -37,16 +37,27 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/user/tier/route.js"
     ],
+    "/app/tasks/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/tasks/page.js"
+    ],
     "/app/notes/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/app/notes/page.css",
       "static/chunks/app/app/notes/page.js"
     ],
-    "/api/notes-password/route": [
+    "/app/diary/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/notes-password/route.js"
+      "static/css/app/app/diary/page.css",
+      "static/chunks/app/app/diary/page.js"
+    ],
+    "/app/pomodoro/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/app/pomodoro/page.js"
     ]
   }
 }
