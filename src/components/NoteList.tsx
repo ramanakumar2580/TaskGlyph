@@ -33,7 +33,7 @@ import db, { type Note } from "@/lib/db/clientDb";
 import {
   CreateNotePasswordModal,
   VerifyNotePasswordModal,
-} from "./NotePasswordModals";
+} from "@/components/NotePasswordModals";
 import { TagsModal } from "./TagsModal";
 
 // --- Date Grouping Logic ---
@@ -91,7 +91,6 @@ function NoteListItem({
   onDelete: () => void;
   onTags: () => void;
 }) {
-  // [FIX #2] Sidebar Preview Logic: First line only, Max 20 chars
   const preview = useMemo(() => {
     if (note.isLocked) return "Note is locked";
     if (!note.content) return "No additional text";
@@ -100,13 +99,11 @@ function NoteListItem({
     el.innerHTML = note.content;
     const fullText = el.textContent || "";
 
-    // Get first non-empty line
     const lines = fullText.split("\n").filter((line) => line.trim() !== "");
     const firstLine = lines[0] || "No additional text";
 
-    // Truncate to 20 characters
-    if (firstLine.length > 20) {
-      return firstLine.substring(0, 20) + "...";
+    if (firstLine.length > 30) {
+      return firstLine.substring(0, 30) + "...";
     }
     return firstLine;
   }, [note.content, note.isLocked]);
@@ -118,76 +115,85 @@ function NoteListItem({
       <ContextMenu.Trigger>
         <div
           onClick={onClick}
-          className={`relative p-4 border-b border-gray-200 cursor-pointer group ${
+          className={`relative p-4 border-b border-gray-100 cursor-pointer group transition-all duration-200 ${
             isActive
-              ? "bg-white shadow-inner border-l-4 border-l-black"
-              : "hover:bg-gray-100 border-l-4 border-l-transparent"
+              ? "bg-blue-50 border-l-4 border-l-blue-500"
+              : "hover:bg-gray-50 border-l-4 border-l-transparent"
           }`}
         >
           <button
             onClick={onTogglePin}
-            className={`absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-300 hover:text-black transition-opacity duration-200
+            className={`absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-black transition-opacity duration-200
               ${
                 note.isPinned
-                  ? "opacity-100"
+                  ? "opacity-100 text-blue-500"
                   : "opacity-0 group-hover:opacity-100"
               }`}
           >
             <Pin
               className={`w-3.5 h-3.5 ${
-                note.isPinned ? "fill-black" : "fill-none"
+                note.isPinned ? "fill-blue-500 text-blue-500" : "fill-none"
               }`}
             />
           </button>
 
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1.5 pr-6">
             {note.isLocked && (
               <Lock className="w-3 h-3 flex-shrink-0 text-gray-400" />
             )}
             <h3
-              className={`font-semibold text-sm truncate pr-6 ${
-                isActive ? "text-black" : "text-gray-700"
+              className={`font-semibold text-sm truncate ${
+                isActive ? "text-blue-900" : "text-gray-800"
               }`}
             >
               {title}
             </h3>
           </div>
 
-          <p className="text-xs text-gray-500 truncate">{preview}</p>
+          <p
+            className={`text-xs truncate ${
+              note.isLocked ? "italic text-gray-400" : "text-gray-500"
+            }`}
+          >
+            {preview}
+          </p>
         </div>
       </ContextMenu.Trigger>
 
-      <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-        <ContextMenu.Item
-          onSelect={() => onTogglePin(new MouseEvent("click") as any)}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
-        >
-          <Pin className="w-4 h-4" />
-          {note.isPinned ? "Unpin Note" : "Pin Note"}
-        </ContextMenu.Item>
-        <ContextMenu.Item
-          onSelect={note.isLocked ? onUnlock : onLock}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
-        >
-          <Lock className="w-4 h-4" />
-          {note.isLocked ? "Unlock Note" : "Lock Note"}
-        </ContextMenu.Item>
-        <ContextMenu.Item
-          onSelect={onTags}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
-        >
-          <Tag className="w-4 h-4" />
-          Tags
-        </ContextMenu.Item>
-        <ContextMenu.Separator className="h-px bg-gray-100 my-1" />
-        <ContextMenu.Item
-          onSelect={onDelete}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-red-50 outline-none text-red-600"
-        >
-          <Trash2 className="w-4 h-4" />
-          Delete Note
-        </ContextMenu.Item>
-      </ContextMenu.Content>
+      {/* ✅ FIX: Wrapped in Portal to float above everything */}
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <ContextMenu.Item
+            onSelect={() => onTogglePin(new MouseEvent("click") as any)}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
+          >
+            <Pin className="w-4 h-4" />
+            {note.isPinned ? "Unpin Note" : "Pin Note"}
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            onSelect={note.isLocked ? onUnlock : onLock}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
+          >
+            <Lock className="w-4 h-4" />
+            {note.isLocked ? "Unlock Note" : "Lock Note"}
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            onSelect={onTags}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
+          >
+            <Tag className="w-4 h-4" />
+            Tags
+          </ContextMenu.Item>
+          <ContextMenu.Separator className="h-px bg-gray-100 my-1" />
+          <ContextMenu.Item
+            onSelect={onDelete}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-red-50 outline-none text-red-600"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Note
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
     </ContextMenu.Root>
   );
 }
@@ -211,7 +217,6 @@ function NoteGalleryItem({
   onDelete: () => void;
   onTags: () => void;
 }) {
-  // [FIX #2] Gallery Preview Logic: First line only, Max 20 chars
   const preview = useMemo(() => {
     if (note.isLocked) return "Note is locked";
     if (!note.content) return "No additional text";
@@ -223,8 +228,8 @@ function NoteGalleryItem({
     const lines = fullText.split("\n").filter((line) => line.trim() !== "");
     const firstLine = lines[0] || "No additional text";
 
-    if (firstLine.length > 20) {
-      return firstLine.substring(0, 20) + "...";
+    if (firstLine.length > 60) {
+      return firstLine.substring(0, 60) + "...";
     }
     return firstLine;
   }, [note.content, note.isLocked]);
@@ -239,7 +244,7 @@ function NoteGalleryItem({
           className={`relative h-40 flex flex-col p-4 border rounded-xl cursor-pointer group transition-all duration-200
             ${
               isActive
-                ? "bg-white shadow-md border-black ring-1 ring-black/5"
+                ? "bg-blue-50 border-blue-200 shadow-md ring-1 ring-blue-100"
                 : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm"
             }`}
         >
@@ -248,64 +253,70 @@ function NoteGalleryItem({
             className={`absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-black transition-all
               ${
                 note.isPinned
-                  ? "opacity-100"
+                  ? "opacity-100 text-blue-500"
                   : "opacity-0 group-hover:opacity-100"
               }`}
           >
             <Pin
               className={`w-3.5 h-3.5 ${
-                note.isPinned ? "fill-black" : "fill-none"
+                note.isPinned ? "fill-blue-500" : "fill-none"
               }`}
             />
           </button>
 
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 pr-6">
             {note.isLocked && (
               <Lock className="w-3 h-3 flex-shrink-0 text-gray-400" />
             )}
-            <h3 className="font-bold text-sm truncate pr-6 text-gray-800">
+            <h3 className="font-bold text-sm truncate text-gray-800 w-full">
               {title}
             </h3>
           </div>
 
-          <p className="text-xs text-gray-500 flex-grow overflow-hidden leading-relaxed">
+          <p
+            className={`text-xs flex-grow overflow-hidden leading-relaxed ${
+              note.isLocked ? "italic text-gray-400" : "text-gray-500"
+            }`}
+          >
             {preview}
           </p>
         </div>
       </ContextMenu.Trigger>
 
-      {/* Context Menu (Same as List Item) */}
-      <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-        <ContextMenu.Item
-          onSelect={() => onTogglePin(new MouseEvent("click") as any)}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
-        >
-          <Pin className="w-4 h-4" />
-          {note.isPinned ? "Unpin Note" : "Pin Note"}
-        </ContextMenu.Item>
-        <ContextMenu.Item
-          onSelect={note.isLocked ? onUnlock : onLock}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
-        >
-          <Lock className="w-4 h-4" />
-          {note.isLocked ? "Unlock Note" : "Lock Note"}
-        </ContextMenu.Item>
-        <ContextMenu.Item
-          onSelect={onTags}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
-        >
-          <Tag className="w-4 h-4" />
-          Tags
-        </ContextMenu.Item>
-        <ContextMenu.Separator className="h-px bg-gray-100 my-1" />
-        <ContextMenu.Item
-          onSelect={onDelete}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-red-50 outline-none text-red-600"
-        >
-          <Trash2 className="w-4 h-4" />
-          Delete Note
-        </ContextMenu.Item>
-      </ContextMenu.Content>
+      {/* ✅ FIX: Wrapped in Portal here too */}
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="bg-white border border-gray-200 w-48 rounded-lg shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <ContextMenu.Item
+            onSelect={() => onTogglePin(new MouseEvent("click") as any)}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
+          >
+            <Pin className="w-4 h-4" />
+            {note.isPinned ? "Unpin Note" : "Pin Note"}
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            onSelect={note.isLocked ? onUnlock : onLock}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
+          >
+            <Lock className="w-4 h-4" />
+            {note.isLocked ? "Unlock Note" : "Lock Note"}
+          </ContextMenu.Item>
+          <ContextMenu.Item
+            onSelect={onTags}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-gray-100 outline-none text-gray-700"
+          >
+            <Tag className="w-4 h-4" />
+            Tags
+          </ContextMenu.Item>
+          <ContextMenu.Separator className="h-px bg-gray-100 my-1" />
+          <ContextMenu.Item
+            onSelect={onDelete}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-red-50 outline-none text-red-600"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Note
+          </ContextMenu.Item>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
     </ContextMenu.Root>
   );
 }
@@ -325,22 +336,26 @@ function TrashListItem({
     : "Recently";
 
   return (
-    <div className="relative p-4 border-b border-gray-200 group bg-gray-50/50 hover:bg-gray-50">
-      <h3 className="font-semibold text-sm truncate pr-6 text-gray-600 line-through opacity-70">
-        {title}
-      </h3>
-      <p className="text-xs text-gray-400 truncate">Deleted: {deletedDate}</p>
-      <div className="flex items-center gap-4 mt-3">
+    <div className="relative p-4 border-b border-gray-200 group bg-gray-50/50 hover:bg-gray-50 transition-colors">
+      <div className="flex justify-between items-start mb-1">
+        <h3 className="font-semibold text-sm truncate pr-6 text-gray-600 line-through opacity-70">
+          {title}
+        </h3>
+      </div>
+      <p className="text-xs text-gray-400 truncate mb-3">
+        Deleted: {deletedDate}
+      </p>
+      <div className="flex items-center gap-3">
         <button
           onClick={onRecover}
-          className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1.5 rounded transition-colors"
         >
           <RotateCcw className="w-3 h-3" />
           Recover
         </button>
         <button
           onClick={onDelete}
-          className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded transition-colors"
         >
           <Trash2 className="w-3 h-3" />
           Delete Forever
@@ -360,11 +375,11 @@ function EmptyTrashModal({
   return (
     <Dialog.Root open onOpenChange={onClose}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm" />
-        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-96 p-6 animate-in fade-in zoom-in-95 duration-200">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm transition-opacity" />
+        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-96 p-6 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
           <div className="flex flex-col items-center text-center">
-            <div className="bg-red-50 p-3 rounded-full mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+            <div className="bg-red-50 p-3 rounded-full mb-4 text-red-500">
+              <AlertTriangle className="w-8 h-8" />
             </div>
             <Dialog.Title className="text-lg font-bold mb-2 text-gray-900">
               Empty Trash?
@@ -378,7 +393,7 @@ function EmptyTrashModal({
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors outline-none focus:ring-2 focus:ring-gray-200"
               >
                 Cancel
               </button>
@@ -386,7 +401,7 @@ function EmptyTrashModal({
             <button
               type="button"
               onClick={onConfirm}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-sm outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
             >
               Delete All
             </button>
@@ -756,9 +771,9 @@ export function NoteList({
                 />
               ))
             ) : (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-                <Trash2 size={32} className="mb-2 opacity-20" />
-                <p className="text-xs">Trash is empty</p>
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <Trash2 size={40} className="mb-3 opacity-20" />
+                <p className="text-sm font-medium">Trash is empty</p>
               </div>
             )}
           </div>
