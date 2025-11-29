@@ -228,7 +228,13 @@ export async function pullChangesFromServer(): Promise<void> {
 
       // 7. Pomodoro
       if (data.pomodoroSessions?.length) {
-        await db.pomodoroSessions.bulkPut(data.pomodoroSessions);
+        const fixedSessions = data.pomodoroSessions.map((s: any) => ({
+          ...s,
+          durationMinutes: Number(s.durationMinutes),
+          completedAt: Number(s.completedAt), // 👈 THIS IS THE MISSING PIECE
+          type: s.type || "work", // Ensure it defaults to 'work' if missing
+        }));
+        await db.pomodoroSessions.bulkPut(fixedSessions);
       }
 
       // 8. Notifications
