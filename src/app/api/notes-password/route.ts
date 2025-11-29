@@ -24,10 +24,8 @@ export async function POST(request: NextRequest) {
 
     // --- ACTION: SET (Create or Change Password) ---
     if (action === "set") {
-      // Hash the password securely
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Store the hash in the user's table
       await pool.query(
         `UPDATE users SET notes_password_hash = $1 WHERE id = $2`,
         [hashedPassword, userId]
@@ -67,8 +65,23 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error) {
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     console.error("Notes password API error:", error);
+
+    // ✅ CHECK: Is the Database Unreachable? (Offline simulation)
+    if (
+      error.code === "ENOTFOUND" ||
+      error.code === "ECONNREFUSED" ||
+      error.code === "EAI_AGAIN"
+    ) {
+      return NextResponse.json(
+        { error: "You are offline. Cannot verify password." },
+        { status: 503 } // 503 Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

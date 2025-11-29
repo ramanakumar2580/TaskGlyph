@@ -5,7 +5,7 @@ import db, { Note, OperationType, EntityType, Folder } from "./clientDb";
 import { v4 as uuidv4 } from "uuid";
 import { useTier } from "./useTier";
 import { triggerSync } from "../sync/syncService";
-import { deleteFromS3 } from "@/lib/deleteFromS3"; // [NEW] Import delete S3
+import { deleteFromS3 } from "@/lib/deleteFromS3";
 
 // --- 1. Notes Hook ---
 export function useNotes() {
@@ -42,6 +42,43 @@ export function useNotes() {
         await db.syncOutbox.add(syncOp);
         triggerSync();
       }
+    }
+  };
+
+  // ✅ [NEW FUNCTION] Verify Password with Offline Check
+  const verifyMasterPassword = async (password: string): Promise<boolean> => {
+    // 1. Check Offline Status First
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      throw new Error("You are offline. Connect to internet to unlock notes.");
+    }
+
+    // 2. If Online, Call the API
+    try {
+      const res = await fetch("/api/notes-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify", password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Incorrect password");
+      }
+
+      return true; // Password is correct
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      // Handle the case where the request fails due to network (double check)
+      if (
+        error.message.includes("offline") ||
+        error.message.includes("fetch")
+      ) {
+        throw new Error(
+          "You are offline. Connect to internet to unlock notes."
+        );
+      }
+      throw error;
     }
   };
 
@@ -86,40 +123,32 @@ export function useNotes() {
     return addNote({ ...payload, isQuickNote: true });
   };
 
-  // Soft Delete (Files stay in S3 for recovery)
   const deleteNote = async (id: string) => {
     console.log(`🗑️ Moving note to trash: ${id}`);
     return updateNote(id, { deletedAt: Date.now(), isPinned: false });
   };
 
-  // [FIX] Hard Delete + S3 Cleanup
   const deleteNotePermanently = async (id: string) => {
     console.log(`🔥 Permanently deleting note: ${id}`);
 
-    // 1. Get the note content to find attachments
     const note = await db.notes.get(id);
 
     if (note && note.content) {
       try {
-        // Parse HTML to find media
         const parser = new DOMParser();
         const doc = parser.parseFromString(note.content, "text/html");
-
-        // Find images, videos, audio, and file links (anchors)
         const mediaElements = doc.querySelectorAll("img, video, audio, a");
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const deletePromises: Promise<any>[] = [];
 
         mediaElements.forEach((el) => {
           const src = el.getAttribute("src") || el.getAttribute("href");
-          // Check if it looks like a cloud storage URL (basic check)
           if (src && src.startsWith("http")) {
             console.log("Deleting attachment from S3:", src);
             deletePromises.push(deleteFromS3(src));
           }
         });
 
-        // Wait for all S3 deletions
         if (deletePromises.length > 0) {
           await Promise.all(deletePromises);
         }
@@ -128,10 +157,8 @@ export function useNotes() {
       }
     }
 
-    // 2. Delete from Dexie
     await db.notes.delete(id);
 
-    // 3. Sync deletion
     if (canSync) {
       const syncOp = {
         id: uuidv4(),
@@ -162,7 +189,6 @@ export function useNotes() {
   const addTagToNote = async (id: string, tag: string) => {
     const note = await db.notes.get(id);
     if (!note) return;
-
     const cleanTag = tag.trim().toLowerCase();
     if (cleanTag && !(note.tags || []).includes(cleanTag)) {
       return updateNote(id, { tags: [...(note.tags || []), cleanTag] });
@@ -172,7 +198,6 @@ export function useNotes() {
   const removeTagFromNote = async (id: string, tag: string) => {
     const note = await db.notes.get(id);
     if (!note) return;
-
     const cleanTag = tag.trim().toLowerCase();
     const newTags = (note.tags || []).filter((t) => t !== cleanTag);
     return updateNote(id, { tags: newTags });
@@ -193,6 +218,7 @@ export function useNotes() {
     moveNoteToFolder,
     addTagToNote,
     removeTagFromNote,
+    verifyMasterPassword, // ✅ Exporting the new function
   };
 }
 

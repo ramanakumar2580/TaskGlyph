@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
-import db from "@/lib/db/clientDb"; // [NEW] Import the client DB
-import { useSession } from "next-auth/react"; // [NEW] Import useSession
+import { Loader2, Lock, Eye, EyeOff, WifiOff } from "lucide-react"; // Added WifiOff icon
+import db from "@/lib/db/clientDb";
+import { useSession } from "next-auth/react";
 
 /**
- * [NEW] Modal for *creating* the notes password
+ * Modal for *creating* the notes password
  */
 export function CreateNotePasswordModal({
   onClose,
@@ -21,11 +21,17 @@ export function CreateNotePasswordModal({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { data: session } = useSession(); // [NEW] Get the user's session
+  const { data: session } = useSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // --- 1. Offline Check for Creation too (Optional but good) ---
+    if (!navigator.onLine) {
+      setError("You are offline. Cannot create a password.");
+      return;
+    }
 
     if (password !== confirm) {
       setError("Passwords do not match.");
@@ -48,15 +54,12 @@ export function CreateNotePasswordModal({
         throw new Error("Failed to set password");
       }
 
-      // [THE FIX]
-      // Manually update the local Dexie DB so our hook sees the change.
       if (session?.user?.id) {
         await db.userMetadata.update(session.user.id, {
           hasNotesPassword: true,
         });
       }
 
-      // Success! Call the onSuccess prop to close and unlock.
       onSuccess(password);
     } catch {
       setError("An error occurred. Please try again.");
@@ -70,7 +73,7 @@ export function CreateNotePasswordModal({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
         <Dialog.Content
           className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          onInteractOutside={(e) => e.preventDefault()} // Don't close on click outside
+          onInteractOutside={(e) => e.preventDefault()}
         >
           <form
             onSubmit={handleSubmit}
@@ -161,7 +164,7 @@ export function CreateNotePasswordModal({
 }
 
 /**
- * [NEW] Modal for *verifying* the notes password
+ * Modal for *verifying* the notes password
  */
 export function VerifyNotePasswordModal({
   onClose,
@@ -178,6 +181,13 @@ export function VerifyNotePasswordModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // ✅ --- [THE FIX: CHECK OFFLINE STATUS] ---
+    if (!navigator.onLine) {
+      setError("You are offline. Cannot verify password.");
+      return; // STOP execution here
+    }
+
     setLoading(true);
 
     try {
@@ -187,7 +197,15 @@ export function VerifyNotePasswordModal({
         body: JSON.stringify({ action: "verify", password }),
       });
 
-      if (res.status === 401) {
+      const data = await res.json(); // Safely parse JSON
+
+      if (
+        res.status === 503 ||
+        (data.error && data.error.includes("offline"))
+      ) {
+        // Handle server saying "I can't reach DB"
+        setError("You are offline. Cannot verify password.");
+      } else if (res.status === 401) {
         setError("Incorrect password. Please try again.");
       } else if (!res.ok) {
         throw new Error("Verification failed");
@@ -195,8 +213,10 @@ export function VerifyNotePasswordModal({
         // Success!
         onSuccess(password);
       }
-    } catch {
-      setError("An error occurred. Please try again.");
+    } catch (err) {
+      // Catch network errors (e.g. if browser goes offline mid-request)
+      console.error(err);
+      setError("Connection error. Please check your internet.");
     }
     setLoading(false);
   };
@@ -247,7 +267,15 @@ export function VerifyNotePasswordModal({
               </button>
             </div>
 
-            {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+            {/* Error Message with Icon */}
+            {error && (
+              <div className="flex items-center gap-2 mt-3 text-red-600 bg-red-50 p-2 rounded-md">
+                {error.includes("offline") || error.includes("Connection") ? (
+                  <WifiOff size={14} />
+                ) : null}
+                <p className="text-xs font-medium">{error}</p>
+              </div>
+            )}
 
             <div className="flex justify-end gap-3 mt-6">
               <button

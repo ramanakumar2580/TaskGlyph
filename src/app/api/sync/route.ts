@@ -3,7 +3,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 import pool from "@/lib/db/serverDb";
-import { PoolClient } from "pg"; // Import the PoolClient type
+import { PoolClient } from "pg";
 
 // --- [GET FUNCTION] ---
 export async function GET(request: NextRequest) {
@@ -17,15 +17,11 @@ export async function GET(request: NextRequest) {
   const since = searchParams.get("since") || "0";
   const userId = session.user.id;
 
-  // ✅ --- [THE FIX] ---
   let client: PoolClient | undefined;
 
   try {
-    // 1. Move the connection *inside* the try block.
     client = await pool.connect();
-
-    await client.query("BEGIN"); // Start a transaction
-    // ✅ --- END OF FIX ---
+    await client.query("BEGIN");
 
     const syncTimestamp = Date.now();
 
@@ -41,127 +37,48 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       // 1. userMetadata
       client.query(
-        `
-          SELECT 
-            id as "userId", 
-            tier,
-            trial_started_at as "trialStartedAt",
-            (notes_password_hash IS NOT NULL) as "hasNotesPassword"
-          FROM users 
-          WHERE id = $1
-        `,
+        `SELECT id as "userId", tier, trial_started_at as "trialStartedAt", (notes_password_hash IS NOT NULL) as "hasNotesPassword" FROM users WHERE id = $1`,
         [userId]
       ),
       // 2. projects
       client.query(
-        `
-          SELECT 
-            id, name, description,
-            accent_color as "accentColor",
-            created_at as "createdAt",
-            updated_at as "updatedAt"
-          FROM projects 
-          WHERE user_id = $1 AND updated_at > $2
-        `,
+        `SELECT id, name, description, accent_color as "accentColor", created_at as "createdAt", updated_at as "updatedAt" FROM projects WHERE user_id = $1 AND updated_at > $2`,
         [userId, since]
       ),
       // 3. tasks
       client.query(
-        `
-          SELECT 
-            id, title, completed, notes, priority, tags, meet_link,
-            created_at as "createdAt",
-            updated_at as "updatedAt",
-            project_id as "projectId",
-            parent_id as "parentId",
-            due_date as "dueDate",
-            recurring_schedule as "recurringSchedule",
-            reminder_at as "reminderAt",
-            reminder_30_sent,
-            reminder_20_sent,
-            reminder_10_sent
-          FROM tasks 
-          WHERE user_id = $1 AND updated_at > $2
-        `,
+        `SELECT id, title, completed, notes, priority, tags, meet_link, created_at as "createdAt", updated_at as "updatedAt", project_id as "projectId", parent_id as "parentId", due_date as "dueDate", recurring_schedule as "recurringSchedule", reminder_at as "reminderAt", reminder_30_sent, reminder_20_sent, reminder_10_sent FROM tasks WHERE user_id = $1 AND updated_at > $2`,
         [userId, since]
       ),
       // 4. notes
       client.query(
-        `
-          SELECT 
-            id, title, content, tags,
-            created_at as "createdAt",
-            updated_at as "updatedAt",
-            folder_id as "folderId",
-            is_pinned as "isPinned",
-            is_locked as "isLocked",
-            is_quick_note as "isQuickNote",
-            deleted_at as "deletedAt"
-          FROM notes 
-          WHERE user_id = $1 AND updated_at > $2
-        `,
+        `SELECT id, title, content, tags, created_at as "createdAt", updated_at as "updatedAt", folder_id as "folderId", is_pinned as "isPinned", is_locked as "isLocked", is_quick_note as "isQuickNote", deleted_at as "deletedAt" FROM notes WHERE user_id = $1 AND updated_at > $2`,
         [userId, since]
       ),
       // 5. folders
       client.query(
-        `
-          SELECT 
-            id, name,
-            created_at as "createdAt",
-            updated_at as "updatedAt"
-          FROM folders 
-          WHERE user_id = $1 AND updated_at > $2
-        `,
+        `SELECT id, name, created_at as "createdAt", updated_at as "updatedAt" FROM folders WHERE user_id = $1 AND updated_at > $2`,
         [userId, since]
       ),
-      // 6. [UPDATED] diary_entries with New Fields
+      // 6. diary_entries
       client.query(
-        `
-          SELECT 
-            id, content,
-            entry_date as "entryDate",
-            created_at as "createdAt",
-            mood,
-            energy,
-            weather,
-            location,
-            tags,
-            is_locked as "isLocked",
-            media
-          FROM diary_entries 
-          WHERE user_id = $1 AND created_at > $2
-        `,
+        `SELECT id, content, entry_date as "entryDate", created_at as "createdAt", mood, energy, weather, location, tags, is_locked as "isLocked", media FROM diary_entries WHERE user_id = $1 AND created_at > $2`,
         [userId, since]
       ),
       // 7. pomodoro_sessions
       client.query(
-        `
-          SELECT 
-            id, type,
-            duration_minutes as "durationMinutes",
-            completed_at as "completedAt"
-          FROM pomodoro_sessions 
-          WHERE user_id = $1 AND completed_at > $2
-        `,
+        `SELECT id, type, duration_minutes as "durationMinutes", completed_at as "completedAt" FROM pomodoro_sessions WHERE user_id = $1 AND completed_at > $2`,
         [userId, since]
       ),
       // 8. notifications
       client.query(
-        `
-          SELECT 
-            id, message, link, read,
-            user_id as "userId",
-            (EXTRACT(EPOCH FROM created_at) * 1000) as "createdAt"
-          FROM notifications 
-          WHERE user_id = $1 AND (EXTRACT(EPOCH FROM created_at) * 1000) > $2
-        `,
+        `SELECT id, message, link, read, user_id as "userId", (EXTRACT(EPOCH FROM created_at) * 1000) as "createdAt" FROM notifications WHERE user_id = $1 AND (EXTRACT(EPOCH FROM created_at) * 1000) > $2`,
         [userId, since]
       ),
     ]);
 
-    await client.query("COMMIT"); // Commit the transaction
+    await client.query("COMMIT");
 
-    // Return all data in a single JSON object
     return NextResponse.json({
       timestamp: syncTimestamp,
       userMetadata: userMetadataRes.rows,
@@ -169,7 +86,6 @@ export async function GET(request: NextRequest) {
       tasks: tasksRes.rows,
       notes: notesRes.rows,
       folders: foldersRes.rows,
-      // [UPDATED] Parse JSON strings for Weather and Media before sending to client
       diaryEntries: diaryEntriesRes.rows.map((row) => ({
         ...row,
         weather: row.weather ? JSON.parse(row.weather) : null,
@@ -179,20 +95,14 @@ export async function GET(request: NextRequest) {
       notifications: notificationsRes.rows,
     });
   } catch (error: any) {
-    // ✅ [FIX] Rollback only if client exists
-    if (client) {
-      await client.query("ROLLBACK"); // Roll back on error
-    }
+    if (client) await client.query("ROLLBACK");
     console.error("Failed to fetch all data for user:", userId, error);
     return NextResponse.json(
       { error: "Failed to fetch data: " + error.message },
       { status: 500 }
     );
   } finally {
-    // ✅ [FIX] Always release the client if it was connected
-    if (client) {
-      client.release();
-    }
+    if (client) client.release();
   }
 }
 
@@ -236,15 +146,38 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const results: { id: string; success: boolean; error?: string }[] = [];
+  // ✅ --- [THE FIX: SORT OPERATIONS] ---
+  // We must process Parents (Projects/Folders) BEFORE Children (Tasks/Notes)
+  // to avoid Foreign Key errors (e.g. "notes_folder_id_fkey")
+  const entityPriority: Record<string, number> = {
+    project: 1, // High Priority (Parent)
+    folder: 1, // High Priority (Parent)
+    task: 2, // Medium Priority (Child)
+    note: 2, // Medium Priority (Child)
+    diary: 3, // Low Priority (Independent)
+    pomodoro: 3,
+    notification: 3,
+  };
 
-  // ✅ --- [THE FIX] ---
+  operations.sort((a, b) => {
+    // 1. First, sort by Entity Type Priority
+    const priorityA = entityPriority[a.entityType] || 99;
+    const priorityB = entityPriority[b.entityType] || 99;
+
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // 2. If same type (e.g. Task & Subtask), sort by Timestamp to preserve creation order
+    return a.timestamp - b.timestamp;
+  });
+  // ✅ --- END OF FIX ---
+
+  const results: { id: string; success: boolean; error?: string }[] = [];
   let client: PoolClient | undefined;
 
   try {
-    // 1. Move connection inside the try block
     client = await pool.connect();
-    // ✅ --- END OF FIX ---
 
     const { rows: userRows } = await client.query(
       "SELECT tier FROM users WHERE id = $1",
@@ -252,7 +185,6 @@ export async function POST(request: NextRequest) {
     );
 
     if (userRows.length === 0) {
-      // client.release() will be handled in 'finally'
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -300,10 +232,6 @@ export async function POST(request: NextRequest) {
             } else if (op.operation === "delete") {
               query = `DELETE FROM projects WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
@@ -392,10 +320,6 @@ export async function POST(request: NextRequest) {
             } else if (op.operation === "delete") {
               query = `DELETE FROM tasks WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
@@ -465,10 +389,6 @@ export async function POST(request: NextRequest) {
             } else if (op.operation === "delete") {
               query = `DELETE FROM notes WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
@@ -502,14 +422,10 @@ export async function POST(request: NextRequest) {
             } else if (op.operation === "delete") {
               query = `DELETE FROM folders WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
-          // ✅ [UPDATED] 'diary' case
+          // 'diary' case
           case "diary":
             if (tier === "free") {
               results.push({
@@ -536,8 +452,6 @@ export async function POST(request: NextRequest) {
                   is_locked = $11,
                   media = $12
               `;
-
-              // Ensure JSON fields are stringified for TEXT columns
               const weatherStr = op.payload.weather
                 ? JSON.stringify(op.payload.weather)
                 : null;
@@ -551,7 +465,6 @@ export async function POST(request: NextRequest) {
                 op.payload.entryDate,
                 op.payload.content,
                 op.payload.createdAt,
-                // New Fields
                 op.payload.mood || null,
                 op.payload.energy || null,
                 weatherStr,
@@ -563,10 +476,6 @@ export async function POST(request: NextRequest) {
             } else if (op.operation === "delete") {
               query = `DELETE FROM diary_entries WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
@@ -596,14 +505,6 @@ export async function POST(request: NextRequest) {
                 op.payload.completedAt,
                 op.payload.type || "work",
               ];
-            } else if (op.operation === "delete") {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
@@ -632,10 +533,6 @@ export async function POST(request: NextRequest) {
             } else if (op.operation === "delete") {
               query = `DELETE FROM notifications WHERE id = $1 AND user_id = $2`;
               values = [op.payload.id, userId];
-            } else {
-              throw new Error(
-                `Unsupported operation "${op.operation}" for entity "${op.entityType}"`
-              );
             }
             break;
 
@@ -659,10 +556,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ results });
   } catch (error: any) {
-    // ✅ [FIX] Rollback only if client exists
-    if (client) {
-      await client.query("ROLLBACK");
-    }
+    if (client) await client.query("ROLLBACK");
     console.error(
       "A critical sync error occurred, transaction rolled back:",
       error
@@ -676,9 +570,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-    // ✅ [FIX] Always release the client if it was connected
-    if (client) {
-      client.release();
-    }
+    if (client) client.release();
   }
 }

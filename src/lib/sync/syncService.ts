@@ -6,7 +6,7 @@ let isPulling = false;
 const SYNC_TRIGGER_EVENT = "taskglyph-sync-trigger";
 const LAST_PULL_KEY = "taskglyph_last_pull";
 
-// ✅ --- [FIX] A new flag to queue a push ---
+// ✅ 1. QUEUE FLAG: To handle rapid changes while pushing
 let pushNeededAfterCurrent = false;
 
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
@@ -20,7 +20,9 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
 
 export function triggerSync() {
   console.log("Poking sync service...");
-  window.dispatchEvent(new Event(SYNC_TRIGGER_EVENT));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(SYNC_TRIGGER_EVENT));
+  }
 }
 
 export function isOnline(): boolean {
@@ -33,25 +35,21 @@ export async function pushChangesToServer(): Promise<void> {
     return;
   }
 
-  // ✅ --- [FIX #1] Handle the "deadlock" ---
-  // If a push is already running, set a flag to
-  // run another one right after it finishes.
+  // ✅ 2. DEADLOCK PREVENTION
+  // If a push is already active, we flag that we need ANOTHER run immediately after.
   if (isPushing) {
     console.log("PUSH already in progress, queuing another push.");
     pushNeededAfterCurrent = true;
     return;
   }
-  // --- End of Fix #1 ---
 
   isPushing = true;
 
   try {
-    // Get the outbox *inside* the try block
     const outbox = await db.syncOutbox.toArray();
 
     if (outbox.length === 0) {
       console.log("✅ PUSH: Outbox is empty");
-      // Do not return here. Let the 'finally' block run.
     } else {
       console.log(`📤 PUSH: Flushing ${outbox.length} operations to server...`);
 
@@ -90,16 +88,16 @@ export async function pushChangesToServer(): Promise<void> {
   } catch (error) {
     console.error("❌ PUSH: Network error during sync:", error);
   } finally {
-    isPushing = false; // Release the lock
+    isPushing = false;
     console.log("PUSH finished.");
 
-    // Check if another push was requested while this one was running
+    // ✅ 3. PROCESS QUEUE
+    // If changes happened while we were pushing, run again immediately.
     if (pushNeededAfterCurrent) {
       console.log("Changes came in during push. Running another push.");
-      pushNeededAfterCurrent = false; // Clear the flag
+      pushNeededAfterCurrent = false;
       setTimeout(pushChangesToServer, 50);
     }
-    // --- End of Fixes ---
   }
 }
 
@@ -144,7 +142,10 @@ export async function pullChangesFromServer(): Promise<void> {
 
     if (!hasNewData) {
       console.log("✅ PULL: No new changes from server.");
-      isPulling = false;
+      // Update timestamp even if no data, to avoid re-fetching old window
+      if (data.timestamp) {
+        localStorage.setItem(LAST_PULL_KEY, data.timestamp);
+      }
       return;
     }
 
@@ -189,30 +190,27 @@ export async function pullChangesFromServer(): Promise<void> {
 export function startBackgroundSync(): () => void {
   console.log("Starting full two-way background sync...");
 
+  // Initial Sync on load
   if (isOnline()) {
-    pushChangesToServer();
+    pushChangesToServer().then(() => pullChangesFromServer());
   }
 
-  if (isOnline()) {
-    pullChangesFromServer();
-  }
-
+  // 1. Listen for "Online" event (Debounced to prevent flutter)
   const handleOnline = () => {
     console.log("🌐 Back online — triggering PUSH");
-    pushChangesToServer();
+    pushChangesToServer().then(() => pullChangesFromServer());
   };
-
   const debouncedHandleOnline = debounce(handleOnline, 2000);
   window.addEventListener("online", debouncedHandleOnline);
 
-  // 4. Listen for pokes
+  // 2. Listen for "Poke" events (Manual triggers from hooks)
   const handleSyncTrigger = () => {
     console.log("Sync poke received, triggering push...");
-    // The push function itself will now handle the lock and queue
     pushChangesToServer();
   };
   window.addEventListener(SYNC_TRIGGER_EVENT, handleSyncTrigger);
 
+  // 3. Regular Interval (Every 60 seconds)
   const pullInterval = setInterval(pullChangesFromServer, 60000);
 
   return () => {
