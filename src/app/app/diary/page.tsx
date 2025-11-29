@@ -288,7 +288,7 @@ export default function DiaryPage() {
     setSelectedDate(newDate);
   };
 
-  // --- 2. Privacy & Sync Logic (Fixed for Empty States) ---
+  // --- 2. Privacy & Sync Logic ---
 
   // Reset State on Date Change
   useEffect(() => {
@@ -326,15 +326,7 @@ export default function DiaryPage() {
     } else {
       // No Entry -> Show Empty State
       setHasExistingEntry(false);
-
-      // ✅ FIX: Force Clear Editor Content when switching to a date with no entry
       editor.commands.clearContent();
-
-      // If it's Today, we might want to just let them write immediately (Optional)
-      // But keeping it consistent with "Start Writing" is cleaner.
-      // Let's auto-start writing ONLY if it's TODAY and user just loaded the app (optional UX).
-      // For now, sticking to "Show Empty State" for all dates with no data is consistent.
-
       setIsWriting(false); // This triggers the "Empty State" UI
 
       setMood(null);
@@ -801,7 +793,6 @@ export default function DiaryPage() {
                             <button
                               key={dateStr}
                               onClick={() => {
-                                // ✅ FIX: Safe Navigation with check
                                 safeDateChange(day);
                                 setIsCalendarOpen(false);
                               }}
@@ -830,7 +821,6 @@ export default function DiaryPage() {
                   {entries.map((entry) => (
                     <div
                       key={entry.id}
-                      // ✅ FIX: Safe Navigation
                       onClick={() => safeDateChange(parseISO(entry.entryDate))}
                       className={`p-3 rounded-xl cursor-pointer transition-all border group ${
                         isSameDay(parseISO(entry.entryDate), selectedDate)
@@ -861,7 +851,6 @@ export default function DiaryPage() {
             <header className="flex-shrink-0 flex justify-between items-end mb-2 px-2">
               <div>
                 <div className="flex items-center gap-3 text-gray-400 text-sm mb-1 font-medium uppercase tracking-wider">
-                  {/* ✅ FIX: Safe Navigation Arrows */}
                   <button
                     onClick={() => safeDateChange(subDays(selectedDate, 1))}
                     className="hover:text-blue-600"
@@ -967,12 +956,6 @@ export default function DiaryPage() {
                   </span>
                 </div>
               </div>
-
-              {/* LOGIC:
-                  1. Entry Exists + Not Revealed -> Show Privacy Screen
-                  2. No Entry + Not Writing (Empty State) -> Show Empty UI
-                  3. Else -> Show Editor
-              */}
 
               {hasExistingEntry && !isRevealed ? (
                 <div
@@ -1128,25 +1111,33 @@ export default function DiaryPage() {
                           >
                             #{tag}{" "}
                             <button
-                              onClick={() =>
-                                setTags(tags.filter((t) => t !== tag))
-                              }
+                              onClick={() => {
+                                setTags(tags.filter((t) => t !== tag));
+                                setSaveStatus("unsaved"); // ✅ MARK AS UNSAVED
+                              }}
                               className="hover:text-red-500"
                             >
                               ×
                             </button>
                           </span>
                         ))}
+                        {/* ✅ FIXED TAG INPUT */}
                         <input
                           type="text"
                           value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          onKeyDown={(e) =>
-                            (e.key === "Enter" &&
-                              newTag.trim() &&
-                              setTags([...tags, newTag])) ||
-                            setNewTag("")
-                          }
+                          onChange={(e) => {
+                            setNewTag(e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (newTag.trim()) {
+                                setTags([...tags, newTag.trim()]);
+                                setNewTag("");
+                                setSaveStatus("unsaved"); // ✅ MARK AS UNSAVED
+                              }
+                            }
+                          }}
                           placeholder="Add tag..."
                           className="bg-transparent text-sm outline-none min-w-[80px] flex-1 placeholder:text-gray-400"
                         />

@@ -125,13 +125,9 @@ export async function pullChangesFromServer(): Promise<void> {
     let lastPulledAt = localStorage.getItem(LAST_PULL_KEY) || "0";
 
     // ✅ CRITICAL FIX: "Deleted from Console" Scenario
-    // If we think we have synced (lastPulledAt > 0), but the DB is empty...
-    // It means the user deleted the IndexedDB manually.
-    // We must force a FULL SYNC (since=0).
     if (lastPulledAt !== "0") {
       const taskCount = await db.tasks.count();
       const noteCount = await db.notes.count();
-      // If DB is basically empty but we have a timestamp, reset it.
       if (taskCount === 0 && noteCount === 0) {
         console.warn(
           "⚠️ Local DB appears empty but has sync timestamp. Forcing full re-sync."
@@ -147,12 +143,8 @@ export async function pullChangesFromServer(): Promise<void> {
 
     const data = await response.json();
 
-    // If "Fresh Sync" (since=0), wipe tables first to ensure exact replica of server
-    // This handles the case where you deleted something on server but local still had it
     if (lastPulledAt === "0") {
       console.log("🧹 Fresh sync detected: Ensuring clean slate...");
-      // Optional: db.tasks.clear(), db.notes.clear() etc.
-      // But usually bulkPut is enough unless you need to remove old local junk.
     }
 
     const hasNewData = [
@@ -174,19 +166,75 @@ export async function pullChangesFromServer(): Promise<void> {
 
     console.log("🔽 PULL: Applying updates...");
 
+    // ✅ DATA SANITIZATION TRANSACTION
+    // We convert strings (from Postgres BIGINT) back to Numbers for Dexie
     await db.transaction("rw", db.tables, async () => {
-      if (data.userMetadata?.length)
+      // 1. User Metadata
+      if (data.userMetadata?.length) {
         await db.userMetadata.bulkPut(data.userMetadata);
-      if (data.projects?.length) await db.projects.bulkPut(data.projects);
-      if (data.tasks?.length) await db.tasks.bulkPut(data.tasks);
-      if (data.notes?.length) await db.notes.bulkPut(data.notes);
-      if (data.folders?.length) await db.folders.bulkPut(data.folders);
-      if (data.diaryEntries?.length)
-        await db.diaryEntries.bulkPut(data.diaryEntries);
-      if (data.pomodoroSessions?.length)
+      }
+
+      // 2. Projects (Fix Dates)
+      if (data.projects?.length) {
+        const fixedProjects = data.projects.map((p: any) => ({
+          ...p,
+          createdAt: Number(p.createdAt),
+          updatedAt: Number(p.updatedAt),
+        }));
+        await db.projects.bulkPut(fixedProjects);
+      }
+
+      // 3. Tasks (Fix Dates)
+      if (data.tasks?.length) {
+        const fixedTasks = data.tasks.map((t: any) => ({
+          ...t,
+          createdAt: Number(t.createdAt),
+          updatedAt: Number(t.updatedAt),
+          dueDate: t.dueDate ? Number(t.dueDate) : null,
+          reminderAt: t.reminderAt ? Number(t.reminderAt) : null,
+        }));
+        await db.tasks.bulkPut(fixedTasks);
+      }
+
+      // 4. Notes (Fix Dates - especially deletedAt!)
+      if (data.notes?.length) {
+        const fixedNotes = data.notes.map((n: any) => ({
+          ...n,
+          createdAt: Number(n.createdAt),
+          updatedAt: Number(n.updatedAt),
+          deletedAt: n.deletedAt ? Number(n.deletedAt) : null,
+        }));
+        await db.notes.bulkPut(fixedNotes);
+      }
+
+      // 5. Folders (Fix Dates)
+      if (data.folders?.length) {
+        const fixedFolders = data.folders.map((f: any) => ({
+          ...f,
+          createdAt: Number(f.createdAt),
+          updatedAt: Number(f.updatedAt),
+        }));
+        await db.folders.bulkPut(fixedFolders);
+      }
+
+      // 6. Diary (Fix Dates)
+      if (data.diaryEntries?.length) {
+        const fixedDiary = data.diaryEntries.map((d: any) => ({
+          ...d,
+          createdAt: Number(d.createdAt),
+        }));
+        await db.diaryEntries.bulkPut(fixedDiary);
+      }
+
+      // 7. Pomodoro
+      if (data.pomodoroSessions?.length) {
         await db.pomodoroSessions.bulkPut(data.pomodoroSessions);
-      if (data.notifications?.length)
+      }
+
+      // 8. Notifications
+      if (data.notifications?.length) {
         await db.notifications.bulkPut(data.notifications);
+      }
     });
 
     localStorage.setItem(LAST_PULL_KEY, data.timestamp);
