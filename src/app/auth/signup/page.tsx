@@ -4,9 +4,13 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import { FcGoogle } from "react-icons/fc"; // Using react-icons for consistency with SignIn
+import { signIn } from "next-auth/react"; // Import signIn for Google
+import { useOnlineStatus } from "@/hooks/useOnlineStatus"; // Import the hook
 
 export default function SignUpPage() {
+  const isOnline = useOnlineStatus(); // 1. Check Offline Status
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,11 +24,14 @@ export default function SignUpPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // 2. Block if offline
+    if (!isOnline) return;
+
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
-    // ✅ Fix: Safely validate confirm password
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       setIsLoading(false);
@@ -40,6 +47,15 @@ export default function SignUpPage() {
 
       const data = await response.json();
 
+      // 3. Handle Duplicate Email (409 Conflict)
+      if (response.status === 409) {
+        setError(
+          "You already have an account with this email. Please Sign In instead."
+        );
+        setIsLoading(false);
+        return;
+      }
+
       if (!response.ok) {
         setError(
           data.error || `Registration failed (Status: ${response.status})`
@@ -54,11 +70,6 @@ export default function SignUpPage() {
     } finally {
       if (!success) setIsLoading(false);
     }
-  };
-
-  // ✅ Handle Google sign-in redirect
-  const handleGoogleSignUp = () => {
-    window.location.href = "/api/auth/google"; // adjust route to your OAuth handler
   };
 
   return (
@@ -79,19 +90,38 @@ export default function SignUpPage() {
           Start organizing your life, online or offline.
         </p>
 
-        {/* ✅ Google Sign Up */}
+        {/* 4. OFFLINE BANNER */}
+        {!isOnline && (
+          <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3 text-amber-800 text-sm">
+            <svg
+              className="w-5 h-5 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span>You are offline. Please reconnect to sign up.</span>
+          </div>
+        )}
+
+        {/* 5. Google Sign Up (Updated to use next-auth) */}
         <button
-          onClick={handleGoogleSignUp}
-          className="w-full flex items-center justify-center border border-gray-300 rounded-md py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition mb-6"
+          onClick={() => signIn("google", { callbackUrl: "/app" })}
+          disabled={!isOnline}
+          className={`w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md py-2 text-sm font-medium text-gray-700 transition mb-6 ${
+            !isOnline
+              ? "opacity-50 cursor-not-allowed bg-gray-50"
+              : "bg-white hover:bg-gray-50"
+          }`}
         >
-          <Image
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            alt="Google"
-            width={5}
-            height={5}
-            className="w-5 h-5 mr-2"
-          />
-          Continue with Google
+          <FcGoogle className="text-xl" />
+          {!isOnline ? "Offline" : "Continue with Google"}
         </button>
 
         <div className="relative mb-6">
@@ -103,7 +133,7 @@ export default function SignUpPage() {
           </div>
         </div>
 
-        {/* ✅ Sign Up Form */}
+        {/* Sign Up Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
@@ -113,9 +143,9 @@ export default function SignUpPage() {
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
               placeholder="Your Name (Optional)"
-              disabled={isLoading}
+              disabled={isLoading || !isOnline}
             />
           </div>
           <div>
@@ -127,13 +157,12 @@ export default function SignUpPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
               placeholder="Enter your email address"
-              disabled={isLoading}
+              disabled={isLoading || !isOnline}
             />
           </div>
 
-          {/* ✅ Password field with visibility toggle */}
           <div className="relative">
             <input
               id="password"
@@ -144,14 +173,15 @@ export default function SignUpPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
               placeholder="Create a password (min. 6 characters)"
-              disabled={isLoading}
+              disabled={isLoading || !isOnline}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+              disabled={!isOnline}
             >
               {showPassword ? (
                 <EyeSlashIcon className="h-5 w-5" />
@@ -161,7 +191,6 @@ export default function SignUpPage() {
             </button>
           </div>
 
-          {/* ✅ Confirm password with visibility toggle */}
           <div className="relative">
             <input
               id="confirmPassword"
@@ -170,14 +199,15 @@ export default function SignUpPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-500"
               placeholder="Confirm your password"
-              disabled={isLoading}
+              disabled={isLoading || !isOnline}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+              disabled={!isOnline}
             >
               {showConfirmPassword ? (
                 <EyeSlashIcon className="h-5 w-5" />
@@ -188,21 +218,30 @@ export default function SignUpPage() {
           </div>
 
           {/* Error or success */}
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600 text-center">
+              {error}
+            </div>
+          )}
           {success && (
-            <p className="text-sm text-green-600 text-center">{success}</p>
+            <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-600 text-center">
+              {success}
+            </div>
           )}
 
           <button
             type="submit"
-            disabled={isLoading || !!success}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading || !!success || !isOnline}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
-            {isLoading ? "Creating Account..." : "Sign Up"}
+            {!isOnline
+              ? "Waiting for Connection..."
+              : isLoading
+              ? "Creating Account..."
+              : "Sign Up"}
           </button>
         </form>
 
-        {/* Link back to Sign In */}
         <p className="mt-6 text-center text-sm text-gray-500">
           Already have an account?{" "}
           <Link
@@ -213,7 +252,6 @@ export default function SignUpPage() {
           </Link>
         </p>
 
-        {/* Terms and Privacy */}
         <p className="mt-8 text-center text-xs text-gray-500">
           By signing up, you agree to the TaskGlyph&nbsp;
           <Link href="/terms" className="underline hover:text-gray-700">
