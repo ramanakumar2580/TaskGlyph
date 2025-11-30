@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
+import { useSession } from "next-auth/react"; // ✅ Added for dynamic name
 import db from "@/lib/db/clientDb";
 import AIInsightsCard from "@/components/dashboard/AIInsightsCard";
 import {
@@ -75,6 +76,7 @@ const WB_COLORS = ["#4f46e5", "#2dd4bf"];
 type HeatmapView = "daily" | "weekly" | "monthly";
 
 export default function DashboardPage() {
+  const { data: session } = useSession(); // ✅ Get session data
   const [heatmapView, setHeatmapView] = useState<HeatmapView>("daily");
   const [quickTask, setQuickTask] = useState("");
 
@@ -96,13 +98,21 @@ export default function DashboardPage() {
 
   // --- 2. DATA PROCESSING ---
 
-  // A. Dynamic Greeting
+  // A. Dynamic Greeting & Name
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning";
     if (hour < 18) return "Good Afternoon";
     return "Good Evening";
   }, []);
+
+  // ✅ Extract first name or fallback to "User"
+  const userName = useMemo(() => {
+    if (session?.user?.name) {
+      return session.user.name.split(" ")[0];
+    }
+    return "User";
+  }, [session]);
 
   // B. Real Streak Calculation
   const currentStreak = useMemo(() => {
@@ -539,8 +549,9 @@ export default function DashboardPage() {
 
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
+          {/* ✅ DYNAMIC NAME */}
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-1">
-            {greeting}, Ramana.
+            {greeting}, {userName}.
           </h1>
           <p className="text-gray-500 font-medium flex items-center gap-2">
             <Activity size={16} className="text-indigo-500" /> Your Command
