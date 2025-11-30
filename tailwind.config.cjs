@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // THIS LINE FORCES LIGHT MODE
-  darkMode: false,
+  // CHANGED: This enables Dark Mode using the "class" strategy
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,7 +10,6 @@ module.exports = {
   theme: {
     extend: {},
   },
-  // We removed the typography plugin
   plugins: [
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("@tailwindcss/typography"),

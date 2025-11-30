@@ -4,6 +4,7 @@ import "./globals.css";
 import "react-datepicker/dist/react-datepicker.css";
 import LayoutClient from "./layout-client";
 import SWRegister from "@/components/SWRegister"; // Verify this path is correct
+import MobileBlocker from "@/components/MobileBlocker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-gray-100 text-gray-900`}>
         {/* ✅ Fix: Wrap everything in LayoutClient so the provider is at the top */}
+        <MobileBlocker />
         <LayoutClient>
           <SWRegister /> {/* ✅ Now this is INSIDE the provider */}
           {children}
