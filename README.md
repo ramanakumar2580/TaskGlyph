@@ -1,47 +1,8 @@
-# TaskGlyph
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-[![Vercel App](https://img.shields.io/badge/Vercel-Live_App-black?style=for-the-badge&logo=vercel)](https://taskglyph.vercel.app/)
+## Getting Started
 
-**Live Demo:** [https://taskglyph.vercel.app/](https://taskglyph.vercel.app/)
-
-**TaskGlyph** is a full-stack, offline-first productivity platform designed for knowledge workers who need resilience, focus, and ownership.
-
-Unlike Notion, Trello, or Todoist—which fail without internet—TaskGlyph thrives offline, working seamlessly on planes, subways, or during internet outages, then syncing effortlessly when back online. It acts as a personal operating system for your work life, combining task management, markdown-based notes, a personal diary, a Pomodoro timer, and analytics into a single unified dashboard.
-
----
-
-## Key Features
-
-- **Offline-First Architecture:** 100% functionality without internet. Data is saved locally via **IndexedDB** and synced when online.
-- **Robust Sync Engine:** Automatic background synchronization with **PostgreSQL** using a "last-write-wins" conflict resolution strategy.
-- **Unified Dashboard:** Manage tasks, notes, and diary entries in one view.
-- **Pomodoro Timer:** Built-in focus timer integrated with your task workflow.
-- **Media Support:** Image attachments supported via **AWS S3** (uploads sync when online).
-- **AI Insights:** Weekly AI-powered summaries of your productivity (e.g., "You completed 18 tasks this week").
-- **Freemium Model:** \* **Free:** 21 tasks, 14 notes, unlimited diary.
-  - **Pro:** Unlimited access, multi-device sync, and advanced analytics.
-
----
-
-## Technical Architecture
-
-TaskGlyph is built as a **Full-Stack Monolith** using **Next.js 15 (App Router)**.
-
-- **Frontend & Local Storage:** React with **Dexie.js** wrapper for IndexedDB management.
-- **Backend:** Next.js API Routes (Serverless functions).
-- **Database:** **PostgreSQL** (hosted on Neon.tech) via Prisma/Drizzle (assumed ORM).
-- **Authentication:** **NextAuth.js** with Google OAuth.
-- **Storage:** **AWS S3** for user uploads.
-- **Payments:** **Razorpay** integration for Pro tier upgrades.
-- **Styling:** **Tailwind CSS** for a clean, responsive, performance-first UI.
-
----
-
-## Environment Variables
-
-To run this project locally, you must create a `.env.local` file in the root directory.
-
-**Note:** Ensure you have accounts set up for NeonDB, Google Cloud Console, AWS S3, and Razorpay.
+First, run the development server:
 
 ```bash
 # ------------------------------
