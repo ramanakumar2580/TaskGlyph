@@ -1,1 +1,198 @@
-{"version":3,"caseSensitive":false,"basePath":"","rewrites":{"beforeFiles":[],"afterFiles":[],"fallback":[]},"redirects":[{"source":"/:path+/","destination":"/:path+","permanent":true,"internal":true,"regex":"^(?:\\/((?:[^\\/]+?)(?:\\/(?:[^\\/]+?))*))\\/$"}],"headers":[]}
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/[...nextauth]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPnextauth": "nxtPnextauth"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/ai/insights",
+      "regex": "^/api/ai/insights(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ai/insights(?:/)?$"
+    },
+    {
+      "page": "/api/auth/register",
+      "regex": "^/api/auth/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/register(?:/)?$"
+    },
+    {
+      "page": "/api/cron/send-reminders",
+      "regex": "^/api/cron/send\\-reminders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/cron/send\\-reminders(?:/)?$"
+    },
+    {
+      "page": "/api/notes-password",
+      "regex": "^/api/notes\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/notes\\-password(?:/)?$"
+    },
+    {
+      "page": "/api/payment/cancel",
+      "regex": "^/api/payment/cancel(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment/cancel(?:/)?$"
+    },
+    {
+      "page": "/api/payment/create-order",
+      "regex": "^/api/payment/create\\-order(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment/create\\-order(?:/)?$"
+    },
+    {
+      "page": "/api/payment/verify",
+      "regex": "^/api/payment/verify(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment/verify(?:/)?$"
+    },
+    {
+      "page": "/api/s3-delete",
+      "regex": "^/api/s3\\-delete(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/s3\\-delete(?:/)?$"
+    },
+    {
+      "page": "/api/s3-upload",
+      "regex": "^/api/s3\\-upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/s3\\-upload(?:/)?$"
+    },
+    {
+      "page": "/api/sync",
+      "regex": "^/api/sync(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/sync(?:/)?$"
+    },
+    {
+      "page": "/api/user/tier",
+      "regex": "^/api/user/tier(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/user/tier(?:/)?$"
+    },
+    {
+      "page": "/app",
+      "regex": "^/app(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app(?:/)?$"
+    },
+    {
+      "page": "/app/dashboard",
+      "regex": "^/app/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/dashboard(?:/)?$"
+    },
+    {
+      "page": "/app/diary",
+      "regex": "^/app/diary(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/diary(?:/)?$"
+    },
+    {
+      "page": "/app/notes",
+      "regex": "^/app/notes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/notes(?:/)?$"
+    },
+    {
+      "page": "/app/pomodoro",
+      "regex": "^/app/pomodoro(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/pomodoro(?:/)?$"
+    },
+    {
+      "page": "/app/pricing",
+      "regex": "^/app/pricing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/pricing(?:/)?$"
+    },
+    {
+      "page": "/app/tasks",
+      "regex": "^/app/tasks(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/tasks(?:/)?$"
+    },
+    {
+      "page": "/auth/signin",
+      "regex": "^/auth/signin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/signin(?:/)?$"
+    },
+    {
+      "page": "/auth/signup",
+      "regex": "^/auth/signup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/signup(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

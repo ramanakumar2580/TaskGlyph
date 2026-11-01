@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 
 // 1. Robust Environment Variable Loading
-const REGION = "ap-south-2";
+const REGION = "ap-southeast-2";
 const BUCKET =
   process.env.AWS_BUCKET_NAME ||
   process.env.AWS_S3_BUCKET_NAME ||
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const decodedKey = decodeURIComponent(key);
 
     console.log(
-      `🗑️ Attempting to delete from bucket: ${BUCKET}, Key: ${decodedKey}`
+      `🗑️ Attempting to delete from bucket: ${BUCKET}, Key: ${decodedKey}`,
     );
 
     const command = new DeleteObjectCommand({
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     // Return the actual error message from AWS to help debugging
     return NextResponse.json(
       { error: error.message || "Failed to delete file" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
